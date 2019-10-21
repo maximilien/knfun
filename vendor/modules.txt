@@ -1,0 +1,84 @@
+# github.com/IBM/go-sdk-core v1.0.0
+github.com/IBM/go-sdk-core/core
+# github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a
+github.com/asaskevich/govalidator
+# github.com/cenkalti/backoff v2.1.1+incompatible
+github.com/cenkalti/backoff
+# github.com/dghubble/go-twitter v0.0.0-20190719072343-39e5462e111f
+github.com/dghubble/go-twitter/twitter
+# github.com/dghubble/oauth1 v0.6.0
+github.com/dghubble/oauth1
+# github.com/dghubble/sling v1.3.0
+github.com/dghubble/sling
+# github.com/dgrijalva/jwt-go v3.2.0+incompatible
+github.com/dgrijalva/jwt-go
+# github.com/fsnotify/fsnotify v1.4.7
+github.com/fsnotify/fsnotify
+# github.com/go-openapi/errors v0.19.2
+github.com/go-openapi/errors
+# github.com/go-openapi/strfmt v0.19.3
+github.com/go-openapi/strfmt
+# github.com/go-playground/locales v0.12.1
+github.com/go-playground/locales
+github.com/go-playground/locales/currency
+# github.com/go-playground/universal-translator v0.16.0
+github.com/go-playground/universal-translator
+# github.com/go-stack/stack v1.8.0
+github.com/go-stack/stack
+# github.com/google/go-querystring v1.0.0
+github.com/google/go-querystring/query
+# github.com/hashicorp/hcl v1.0.0
+github.com/hashicorp/hcl
+github.com/hashicorp/hcl/hcl/printer
+github.com/hashicorp/hcl/hcl/ast
+github.com/hashicorp/hcl/hcl/parser
+github.com/hashicorp/hcl/hcl/token
+github.com/hashicorp/hcl/json/parser
+github.com/hashicorp/hcl/hcl/scanner
+github.com/hashicorp/hcl/hcl/strconv
+github.com/hashicorp/hcl/json/scanner
+github.com/hashicorp/hcl/json/token
+# github.com/inconshreveable/mousetrap v1.0.0
+github.com/inconshreveable/mousetrap
+# github.com/leodido/go-urn v1.2.0
+github.com/leodido/go-urn
+# github.com/magiconair/properties v1.8.0
+github.com/magiconair/properties
+# github.com/mitchellh/go-homedir v1.1.0
+github.com/mitchellh/go-homedir
+# github.com/mitchellh/mapstructure v1.1.2
+github.com/mitchellh/mapstructure
+# github.com/pelletier/go-toml v1.2.0
+github.com/pelletier/go-toml
+# github.com/spf13/afero v1.1.2
+github.com/spf13/afero
+github.com/spf13/afero/mem
+# github.com/spf13/cast v1.3.0
+github.com/spf13/cast
+# github.com/spf13/cobra v0.0.5
+github.com/spf13/cobra
+# github.com/spf13/jwalterweatherman v1.0.0
+github.com/spf13/jwalterweatherman
+# github.com/spf13/pflag v1.0.3
+github.com/spf13/pflag
+# github.com/spf13/viper v1.4.0
+github.com/spf13/viper
+# github.com/watson-developer-cloud/go-sdk v1.0.0
+github.com/watson-developer-cloud/go-sdk/visualrecognitionv3
+github.com/watson-developer-cloud/go-sdk/common
+# go.mongodb.org/mongo-driver v1.0.3
+go.mongodb.org/mongo-driver/bson
+go.mongodb.org/mongo-driver/bson/bsontype
+go.mongodb.org/mongo-driver/bson/primitive
+go.mongodb.org/mongo-driver/bson/bsoncodec
+go.mongodb.org/mongo-driver/bson/bsonrw
+go.mongodb.org/mongo-driver/x/bsonx/bsoncore
+# golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a
+golang.org/x/sys/unix
+# golang.org/x/text v0.3.0
+golang.org/x/text/transform
+golang.org/x/text/unicode/norm
+# gopkg.in/go-playground/validator.v9 v9.30.0
+gopkg.in/go-playground/validator.v9
+# gopkg.in/yaml.v2 v2.2.2
+gopkg.in/yaml.v2

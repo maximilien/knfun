@@ -47,8 +47,8 @@ type SearchFn struct {
 	Count  int
 	Output string
 
-	Server bool
-	Port   int
+	StartServer bool
+	Port        int
 
 	keys twitterKeys
 }
@@ -68,9 +68,6 @@ func (searchFn *SearchFn) Search() (TweetsData, error) {
 
 func (searchFn *SearchFn) SearchHandler(writer http.ResponseWriter, request *http.Request) {
 	searchString, count, output := searchFn.extractQueryParams(request)
-
-	fmt.Printf("init: s: %s, c: %d, o: %s\n", searchFn.String, searchFn.Count, searchFn.Output) //DEBUG
-	fmt.Printf("extracted: s: %s, c: %d, o: %s\n", searchString, count, output)                 //DEBUG
 
 	if searchString == "" {
 		log.Fatal("Must pass a query string using 'q' or 'query' parameter")

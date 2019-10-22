@@ -42,8 +42,8 @@ type ClassifyImageFn struct {
 	ImageURL string
 	Output   string
 
-	Server bool
-	Port   int
+	StartServer bool
+	Port        int
 
 	keys watsonKeys
 }
@@ -95,7 +95,7 @@ func (classifyImageFn *ClassifyImageFn) ClassifyHandler(writer http.ResponseWrit
 	fmt.Fprintf(writer, "%s\n", classifyImageFn.collectClassifyImageData(classifiedImages).Flatten(output))
 }
 
-// Private classifyFn
+// Private classifyImageFn
 
 func (classifyImageFn *ClassifyImageFn) createWatsonClient() (*vr3.VisualRecognitionV3, error) {
 	return vr3.NewVisualRecognitionV3(&vr3.VisualRecognitionV3Options{
@@ -106,8 +106,6 @@ func (classifyImageFn *ClassifyImageFn) createWatsonClient() (*vr3.VisualRecogni
 		},
 	})
 }
-
-// Collect Watson data
 
 func (classifyImageFn *ClassifyImageFn) collectClassifyImageData(classifiedImages *vr3.ClassifiedImages) ClassifyImageData {
 	cIData := ClassifyImageData{}

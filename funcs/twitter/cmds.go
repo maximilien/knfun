@@ -59,26 +59,14 @@ func NewTwitterCmd() *cobra.Command {
 		Long: `Searches twitter for tweets matching some criteria
 and responds with with content of that tweet`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return Search(cmd, args)
-		},
-	}
-
-	serverCmd := &cobra.Command{
-		Use:   "server",
-		Short: "Starts a server to allow search for tweets and extract contents",
-		Long: `A server that allows searches twitter for tweets matching some criteria
-and responds with with content of that tweet`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return Server(cmd, args)
+			return search(cmd, args)
 		},
 	}
 
 	addTwitterCmdFlags(twitterCmd)
 	addSearchCmdFlags(searchCmd)
-	addServerCmdFlags(serverCmd)
 
 	twitterCmd.AddCommand(searchCmd)
-	twitterCmd.AddCommand(serverCmd)
 
 	return twitterCmd
 }
@@ -87,32 +75,28 @@ func Execute() error {
 	return NewTwitterCmd().Execute()
 }
 
-func Search(cmd *cobra.Command, args []string) error {
+// Private
+
+func search(cmd *cobra.Command, args []string) error {
 	err := initSearchInput(args)
 	if err != nil {
 		return err
 	}
 
-	tweetsData, err := searchFn.Search()
-	if err != nil {
-		return err
+	if searchFn.StartServer {
+		http.HandleFunc("/", searchFn.SearchHandler)
+		return http.ListenAndServe(fmt.Sprintf(":%d", searchFn.Port), nil)
+	} else {
+		tweetsData, err := searchFn.Search()
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("%s\n", tweetsData.Flatten(searchFn.Output))
 	}
 
-	fmt.Printf("%s\n", tweetsData.Flatten(searchFn.Output))
 	return nil
 }
-
-func Server(cmd *cobra.Command, args []string) error {
-	err := initSearchInput(args)
-	if err != nil {
-		return err
-	}
-
-	http.HandleFunc("/", searchFn.SearchHandler)
-	return http.ListenAndServe(fmt.Sprintf(":%d", searchFn.Port), nil)
-}
-
-// Private
 
 func addTwitterCmdFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.twiter.yaml)")
@@ -133,15 +117,8 @@ func addSearchCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().IntVarP(&searchFn.Count, "count", "c", 10, "the max number of results")
 
 	cmd.Flags().StringVarP(&searchFn.Output, "output", "o", "text", "the output: text, yaml, or json, of results")
-}
 
-func addServerCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&searchFn.String, "string", "s", "", "the string to search for")
-	cmd.Flags().IntVarP(&searchFn.Count, "count", "c", 10, "the max number of results")
-
-	cmd.Flags().StringVarP(&searchFn.Output, "output", "o", "text", "the output: text, yaml, or json, of results")
-
-	cmd.Flags().BoolVarP(&searchFn.Server, "server", "S", false, "start as a server")
+	cmd.Flags().BoolVarP(&searchFn.StartServer, "start-server", "S", false, "start as a server")
 	cmd.Flags().IntVarP(&searchFn.Port, "port", "p", 8080, "the port for the server")
 }
 

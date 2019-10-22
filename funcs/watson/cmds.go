@@ -64,28 +64,15 @@ func NewWatsonCmd() *cobra.Command {
 		Short: "classify image",
 		Long:  `classify an image using the Watson APIs`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return Classify(cmd, args)
-		},
-	}
-
-	serverCmd := &cobra.Command{
-		Use:   "server",
-		Short: "Starts a server to allow search for tweets and extract contents",
-		Long: `A server that allows searches twitter for tweets matching some criteria
-and responds with with content of that tweet`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return Server(cmd, args)
+			return classify(cmd, args)
 		},
 	}
 
 	addWatsonCmdFlags(watsonCmd)
 	addClassifyCmdFlags(classifyCmd)
-	addServerCmdFlags(serverCmd)
 
 	watsonCmd.AddCommand(vrCmd)
-
 	vrCmd.AddCommand(classifyCmd)
-	vrCmd.AddCommand(serverCmd)
 
 	return watsonCmd
 }
@@ -94,32 +81,28 @@ func Execute() error {
 	return NewWatsonCmd().Execute()
 }
 
-func Classify(cmd *cobra.Command, args []string) error {
+// Private
+
+func classify(cmd *cobra.Command, args []string) error {
 	err := initClassifyInput(args)
 	if err != nil {
 		return err
 	}
 
-	classifyData, err := classifyImageFn.ClassifyImage()
-	if err != nil {
-		return err
+	if classifyImageFn.StartServer {
+		http.HandleFunc("/", classifyImageFn.ClassifyHandler)
+		return http.ListenAndServe(fmt.Sprintf(":%d", classifyImageFn.Port), nil)
+	} else {
+		classifyData, err := classifyImageFn.ClassifyImage()
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("%s\n", classifyData.Flatten(classifyImageFn.Output))
 	}
 
-	fmt.Printf("%s\n", classifyData.Flatten(classifyImageFn.Output))
 	return nil
 }
-
-func Server(cmd *cobra.Command, args []string) error {
-	err := initClassifyInput(args)
-	if err != nil {
-		return err
-	}
-
-	http.HandleFunc("/", classifyImageFn.ClassifyHandler)
-	return http.ListenAndServe(fmt.Sprintf(":%d", classifyImageFn.Port), nil)
-}
-
-// Private
 
 func addWatsonCmdFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.watson.yaml)")
@@ -136,13 +119,8 @@ func addWatsonCmdFlags(cmd *cobra.Command) {
 func addClassifyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&classifyImageFn.ImageURL, "image-url", "u", "", "the URL of the image to classify")
 	cmd.Flags().StringVarP(&classifyImageFn.Output, "output", "o", "text", "the output: text, yaml, or json, of results")
-}
 
-func addServerCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&classifyImageFn.ImageURL, "image-url", "u", "", "the URL of the image to classify")
-	cmd.Flags().StringVarP(&classifyImageFn.Output, "output", "o", "text", "the output: text, yaml, or json, of results")
-
-	cmd.Flags().BoolVarP(&classifyImageFn.Server, "server", "S", false, "start as a server")
+	cmd.Flags().BoolVarP(&classifyImageFn.StartServer, "start-server", "S", false, "start as a server")
 	cmd.Flags().IntVarP(&classifyImageFn.Port, "port", "p", 8080, "the port for the server")
 }
 

@@ -67,7 +67,7 @@ func (searchFn *SearchFn) SearchHandler(writer http.ResponseWriter, request *htt
 	searchString, count, output := searchFn.extractQueryParams(request)
 
 	if searchString == "" {
-		log.Fatal("Must pass a query string using 'q' or 'query' parameter")
+		log.Printf("Must pass a query string using 'q' or 'query' parameter")
 		return
 	}
 
@@ -78,7 +78,7 @@ func (searchFn *SearchFn) SearchHandler(writer http.ResponseWriter, request *htt
 	})
 
 	if err != nil {
-		log.Fatal("Error searching for tweets: %s\n", err.Error())
+		log.Printf("Error searching for tweets: %s\n", err.Error())
 		return
 	}
 

@@ -71,13 +71,13 @@ func (classifyImageFn *ClassifyImageFn) ClassifyHandler(writer http.ResponseWrit
 	imageURL, output := classifyImageFn.extractQueryParams(request)
 
 	if imageURL == "" {
-		log.Fatal("Must pass an image URL string using 'q' or 'query' parameter")
+		log.Printf("Must pass an image URL string using 'q' or 'query' parameter")
 		return
 	}
 
 	vr, err := classifyImageFn.createWatsonClient()
 	if err != nil {
-		log.Fatal("Error creating visual recognition client: %s\n", err.Error())
+		log.Printf("Error creating visual recognition client: %s\n", err.Error())
 		return
 	}
 
@@ -87,7 +87,7 @@ func (classifyImageFn *ClassifyImageFn) ClassifyHandler(writer http.ResponseWrit
 		},
 	)
 	if err != nil {
-		log.Fatal("Error classifying image: %s\n", err.Error())
+		log.Printf("Error classifying image: %s\n", err.Error())
 		return
 	}
 

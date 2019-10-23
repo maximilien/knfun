@@ -1,10 +1,24 @@
 <h1>{{.PageTitle}}</h1>
-<ul>
-    {{range .Todos}}
-        {{if .Done}}
-            <li class="done">{{.Title}}</li>
-        {{else}}
-            <li>{{.Title}}</li>
+<div>
+    {{range .Tweets}}
+    <div>
+        {{range .ClassifiedImages}}
+        	<div>
+        		<img src="{{.ResolvedURL}}">
+        	</div>
+	        <div>
+	        	{{range .Classifiers}}
+	        	<div>
+		        	{{range .Classes}}
+		        		<div>{{.Name}} ({{.Score}})
+		        	{{end}}
+		        </div>
+	        	{{end}}
+	        </div>
         {{end}}
+        <div>{{.Text}}</div>
+        <br/>
+        <hr/>
+    </div>
     {{end}}
-</ul>
+</div>

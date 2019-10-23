@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -63,30 +64,33 @@ type SummaryFn struct {
 	WatsonFnURL  string
 }
 
+type SummaryPageData struct {
+	PageTitle string
+	Tweets    []ClassifiedTweet
+}
+
 func (summaryFn *SummaryFn) Summary() ([]ClassifiedTweet, error) {
 	return summaryFn.collectClassifiedTweets()
 }
 
 func (summaryFn *SummaryFn) SummaryHandler(writer http.ResponseWriter, request *http.Request) {
-	//classifiedTweets, err := summaryFn.collectClassifiedTweets()
-	_, err := summaryFn.collectClassifiedTweets()
+	classifiedTweets, err := summaryFn.collectClassifiedTweets()
 	if err != nil {
-		log.Fatal("Error collecting classified tweets: %s\n", err.Error())
+		log.Printf("Error collecting classified tweets: %s\n", err.Error())
 		return
 	}
 
-	//TODO: use correct template and pass correct data
-	// tmpl := template.Must(template.ParseFiles("./funcs/summary/layout.html"))
-	// data := TodoPageData{
-	// 	PageTitle: "My TODO list",
-	// 	Todos: []Todo{
-	// 		{Title: "Task 1", Done: false},
-	// 		{Title: "Task 2", Done: true},
-	// 		{Title: "Task 3", Done: true},
-	// 	},
-	// }
-	// tmpl.Execute(w, data)
-	//TODO
+	tmpl := template.Must(template.ParseFiles("./funcs/summary/layout.html"))
+	data := SummaryPageData{
+		PageTitle: fmt.Sprintf("Recent tweets with images for search `%s`", summaryFn.SearchString),
+		Tweets:    classifiedTweets,
+	}
+
+	err = tmpl.Execute(writer, data)
+	if err != nil {
+		log.Printf("Error executing template with classified tweets: %s\n", err.Error())
+		return
+	}
 }
 
 // Private SummaryFn

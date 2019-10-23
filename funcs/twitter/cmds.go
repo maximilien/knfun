@@ -113,7 +113,7 @@ func addTwitterCmdFlags(cmd *cobra.Command) {
 }
 
 func addSearchCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&searchFn.String, "string", "s", "", "the string to search for")
+	cmd.Flags().StringVarP(&searchFn.SearchString, "search-string", "s", "", "the string to search for")
 	cmd.Flags().IntVarP(&searchFn.Count, "count", "c", 10, "the max number of results")
 
 	cmd.Flags().StringVarP(&searchFn.Output, "output", "o", "text", "the output: text, yaml, or json, of results")
@@ -145,10 +145,10 @@ func initConfig() {
 
 func initSearchInput(args []string) error {
 	if len(args) == 1 {
-		searchFn.String = args[0]
+		searchFn.SearchString = args[0]
 	}
 
-	if searchFn.String == "" {
+	if searchFn.SearchString == "" {
 		return errors.New(fmt.Sprintf("You must pass a search string"))
 	}
 

@@ -43,9 +43,9 @@ type TweetData struct {
 type TweetsData []TweetData
 
 type SearchFn struct {
-	String string
-	Count  int
-	Output string
+	SearchString string
+	Count        int
+	Output       string
 
 	StartServer bool
 	Port        int
@@ -56,7 +56,7 @@ type SearchFn struct {
 func (searchFn *SearchFn) Search() (TweetsData, error) {
 	client := searchFn.createTwitterClient()
 	results, _, err := client.Search.Tweets(&twitter.SearchTweetParams{
-		Query: searchFn.String,
+		Query: searchFn.SearchString,
 		Count: searchFn.Count,
 	})
 	if err != nil {
@@ -117,7 +117,7 @@ func (searchFn *SearchFn) collectTweetsData(tweets []twitter.Tweet) TweetsData {
 
 func (searchFn *SearchFn) extractQueryParams(request *http.Request) (string, int, string) {
 	var err error
-	searchString, count, output := searchFn.String, searchFn.Count, searchFn.Output
+	searchString, count, output := searchFn.SearchString, searchFn.Count, searchFn.Output
 
 	query := request.URL.Query()
 

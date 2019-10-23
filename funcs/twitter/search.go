@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/maximilien/knfun/funcs/common"
 
@@ -64,7 +63,9 @@ func (searchFn *SearchFn) Search() (TweetsData, error) {
 }
 
 func (searchFn *SearchFn) SearchHandler(writer http.ResponseWriter, request *http.Request) {
-	searchString, count, output := searchFn.extractQueryParams(request)
+	searchString := searchFn.ExtractQueryStringParam(request, []string{"q", "query", "search-string", "s"}, searchFn.SearchString)
+	output := searchFn.ExtractQueryStringParam(request, []string{"o", "output"}, searchFn.Output)
+	count := searchFn.ExtractQueryIntParam(request, []string{"c", "count"}, searchFn.Count)
 
 	if searchString == "" {
 		log.Printf("Must pass a query string using 'q' or 'query' parameter")
@@ -83,7 +84,7 @@ func (searchFn *SearchFn) SearchHandler(writer http.ResponseWriter, request *htt
 	}
 
 	tweetsData := searchFn.collectTweetsData(results.Statuses)
-	writer.Header().Add("Content-Type", searchFn.outputContentType(output))
+	writer.Header().Add("Content-Type", searchFn.OutputContentType(output))
 	fmt.Fprintf(writer, "%s\n", tweetsData.Flatten(output))
 }
 
@@ -110,55 +111,6 @@ func (searchFn *SearchFn) collectTweetsData(tweets []twitter.Tweet) TweetsData {
 		tweetsData = append(tweetsData, tweetData)
 	}
 	return tweetsData
-}
-
-func (searchFn *SearchFn) extractQueryParams(request *http.Request) (string, int, string) {
-	var err error
-	searchString, count, output := searchFn.SearchString, searchFn.Count, searchFn.Output
-
-	query := request.URL.Query()
-
-	if query.Get("q") != "" {
-		searchString = query.Get("q")
-	} else {
-		if query.Get("query") != "" {
-			searchString = query.Get("query")
-		}
-	}
-
-	if query.Get("c") != "" {
-		count, err = strconv.Atoi(query.Get("c"))
-		if err != nil {
-			log.Fatal(fmt.Sprintf("Count query parameter 'c' is invalid '%s'!", err.Error()))
-		}
-	} else {
-		if query.Get("count") != "" {
-			count, err = strconv.Atoi(query.Get("count"))
-			if err != nil {
-				log.Fatal("Count query parameter 'count' is invalid!")
-			}
-		}
-	}
-
-	if query.Get("o") != "" {
-		output = query.Get("o")
-	} else {
-		if query.Get("ouput") != "" {
-			output = query.Get("output")
-		}
-	}
-
-	return searchString, count, output
-}
-
-func (searchFn *SearchFn) outputContentType(output string) string {
-	switch output {
-	case "yaml":
-		return "application/yaml"
-	case "json":
-		return "application/json"
-	}
-	return "text/html"
 }
 
 // Private TweetsData

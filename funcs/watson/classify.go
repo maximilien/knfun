@@ -68,7 +68,8 @@ func (classifyImageFn *ClassifyImageFn) ClassifyImage() (ClassifyImageData, erro
 }
 
 func (classifyImageFn *ClassifyImageFn) ClassifyHandler(writer http.ResponseWriter, request *http.Request) {
-	imageURL, output := classifyImageFn.extractQueryParams(request)
+	imageURL := classifyImageFn.ExtractQueryStringParam(request, []string{"query", "q", "image-url", "u"}, classifyImageFn.ImageURL)
+	output := classifyImageFn.ExtractQueryStringParam(request, []string{"o", "output"}, classifyImageFn.Output)
 
 	if imageURL == "" {
 		log.Printf("Must pass an image URL string using 'q' or 'query' parameter")
@@ -91,7 +92,7 @@ func (classifyImageFn *ClassifyImageFn) ClassifyHandler(writer http.ResponseWrit
 		return
 	}
 
-	writer.Header().Add("Content-Type", classifyImageFn.outputContentType(output))
+	writer.Header().Add("Content-Type", classifyImageFn.OutputContentType(output))
 	fmt.Fprintf(writer, "%s\n", classifyImageFn.collectClassifyImageData(classifiedImages).Flatten(output))
 }
 
@@ -115,40 +116,6 @@ func (classifyImageFn *ClassifyImageFn) collectClassifyImageData(classifiedImage
 	}
 
 	return cIData
-}
-
-func (classifyImageFn *ClassifyImageFn) extractQueryParams(request *http.Request) (string, string) {
-	imageURL, output := classifyImageFn.ImageURL, classifyImageFn.Output
-
-	query := request.URL.Query()
-
-	if query.Get("q") != "" {
-		imageURL = query.Get("q")
-	} else {
-		if query.Get("query") != "" {
-			imageURL = query.Get("query")
-		}
-	}
-
-	if query.Get("o") != "" {
-		output = query.Get("o")
-	} else {
-		if query.Get("ouput") != "" {
-			output = query.Get("output")
-		}
-	}
-
-	return imageURL, output
-}
-
-func (classifyImageFn *ClassifyImageFn) outputContentType(output string) string {
-	switch output {
-	case "yaml":
-		return "application/yaml"
-	case "json":
-		return "application/json"
-	}
-	return "text/html"
 }
 
 // Private ClassifyImageData

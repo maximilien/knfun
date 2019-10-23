@@ -21,31 +21,31 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/maximilien/knfun/funcs/common"
+
 	"gopkg.in/yaml.v2"
 
 	"github.com/IBM/go-sdk-core/core"
 	vr3 "github.com/watson-developer-cloud/go-sdk/visualrecognitionv3"
 )
 
-type watsonKeys struct {
-	apiKey     string
-	apiURL     string
-	apiVersion string
+type keys struct {
+	watsonAPIKey     string
+	watsonAPIURL     string
+	watsonAPIVersion string
 }
 
 type ClassifyImageData struct {
-	ClassifiedImage vr3.ClassifiedImage
-	Warnings        []vr3.WarningInfo
+	vr3.ClassifiedImage
+	Warnings []vr3.WarningInfo
 }
 
 type ClassifyImageFn struct {
+	common.CommonFn
+
 	ImageURL string
-	Output   string
 
-	StartServer bool
-	Port        int
-
-	keys watsonKeys
+	keys keys
 }
 
 func (classifyImageFn *ClassifyImageFn) ClassifyImage() (ClassifyImageData, error) {
@@ -99,10 +99,10 @@ func (classifyImageFn *ClassifyImageFn) ClassifyHandler(writer http.ResponseWrit
 
 func (classifyImageFn *ClassifyImageFn) createWatsonClient() (*vr3.VisualRecognitionV3, error) {
 	return vr3.NewVisualRecognitionV3(&vr3.VisualRecognitionV3Options{
-		URL:     classifyImageFn.keys.apiURL,
-		Version: classifyImageFn.keys.apiVersion,
+		URL:     classifyImageFn.keys.watsonAPIURL,
+		Version: classifyImageFn.keys.watsonAPIVersion,
 		Authenticator: &core.IamAuthenticator{
-			ApiKey: classifyImageFn.keys.apiKey,
+			ApiKey: classifyImageFn.keys.watsonAPIKey,
 		},
 	})
 }

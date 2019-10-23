@@ -22,17 +22,19 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/maximilien/knfun/funcs/common"
+
 	"gopkg.in/yaml.v2"
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
 )
 
-type twitterKeys struct {
-	apiKey            string
-	apiSecretKey      string
-	accessToken       string
-	accessTokenSecret string
+type keys struct {
+	twitterAPIKey            string
+	twitterAPISecretKey      string
+	twitterAccessToken       string
+	twitterAccessTokenSecret string
 }
 
 type TweetData struct {
@@ -43,14 +45,9 @@ type TweetData struct {
 type TweetsData []TweetData
 
 type SearchFn struct {
-	SearchString string
-	Count        int
-	Output       string
+	common.CommonFn
 
-	StartServer bool
-	Port        int
-
-	keys twitterKeys
+	keys keys
 }
 
 func (searchFn *SearchFn) Search() (TweetsData, error) {
@@ -93,8 +90,8 @@ func (searchFn *SearchFn) SearchHandler(writer http.ResponseWriter, request *htt
 // Private SearchFn
 
 func (searchFn *SearchFn) createTwitterClient() *twitter.Client {
-	config := oauth1.NewConfig(searchFn.keys.apiKey, searchFn.keys.apiSecretKey)
-	token := oauth1.NewToken(searchFn.keys.accessToken, searchFn.keys.accessTokenSecret)
+	config := oauth1.NewConfig(searchFn.keys.twitterAPIKey, searchFn.keys.twitterAPISecretKey)
+	token := oauth1.NewToken(searchFn.keys.twitterAccessToken, searchFn.keys.twitterAccessTokenSecret)
 	httpClient := config.Client(oauth1.NoContext, token)
 	return twitter.NewClient(httpClient)
 }

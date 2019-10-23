@@ -15,42 +15,44 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	homedir "github.com/mitchellh/go-homedir"
 )
 
 var (
-	cfgFile   string
 	summaryFn *SummaryFn
 )
 
 func NewSummaryCmd() *cobra.Command {
 	summaryFn = &SummaryFn{}
 
-	cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(summaryFn.InitConfig)
 
 	summaryCmd := &cobra.Command{
 		Use:   "summary",
 		Short: "Summary root function",
 		Long:  `Summarizes the TwitterFn and WatsonFn APIs funcs`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			summaryFn.initInputFlags(args)
+			return summaryFn.InitCommonInputFlags(args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				cmd.Help()
 				os.Exit(0)
 			}
 
-			return summary(cmd, args)
+			return summaryFn.summary(cmd, args)
 		},
 	}
 
-	addSummaryCmdFlags(summaryCmd)
+	summaryFn.AddCommonCmdFlags(summaryCmd)
+
+	summaryFn.addSummaryCmdFlags(summaryCmd)
 
 	return summaryCmd
 }
@@ -61,12 +63,7 @@ func Execute() error {
 
 // Private
 
-func summary(cmd *cobra.Command, args []string) error {
-	err := initInput(args)
-	if err != nil {
-		return err
-	}
-
+func (summaryFn *SummaryFn) summary(cmd *cobra.Command, args []string) error {
 	if summaryFn.StartServer {
 		http.HandleFunc("/", summaryFn.SummaryHandler)
 		return http.ListenAndServe(fmt.Sprintf(":%d", summaryFn.Port), nil)
@@ -85,55 +82,12 @@ func summary(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func addSummaryCmdFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.twiter.yaml)")
-
+func (summaryFn *SummaryFn) addSummaryCmdFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVar(&summaryFn.TwitterFnURL, "twitter-fn-url", "", "twitter API func URL")
 	cmd.PersistentFlags().StringVar(&summaryFn.WatsonFnURL, "watson-fn-url", "", "watson API func URL")
-
-	viper.BindPFlag("twitter-fn-url", cmd.PersistentFlags().Lookup("twitter-fn-url"))
-	viper.BindPFlag("watson-fn-url", cmd.PersistentFlags().Lookup("watson-fn-url"))
-
-	cmd.Flags().StringVarP(&summaryFn.SearchString, "search-string", "s", "", "the string to search for")
-	cmd.Flags().IntVarP(&summaryFn.Count, "count", "c", 10, "the max number of results")
-	cmd.Flags().IntVarP(&summaryFn.Timeout, "timeout", "t", 60, "the timeout in seconds for requests to functions")
-
-	cmd.Flags().StringVarP(&summaryFn.Output, "output", "o", "text", "the output: text, yaml, or json, of results")
-
-	cmd.Flags().BoolVarP(&summaryFn.StartServer, "start-server", "S", false, "start as a server")
-	cmd.Flags().IntVarP(&summaryFn.Port, "port", "p", 8080, "the port for the server")
 }
 
-func initConfig() {
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-	} else {
-		home, err := homedir.Dir()
-		if err != nil {
-			os.Exit(-1)
-		}
-
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".summary")
-	}
-
-	viper.AutomaticEnv()
-
-	err := viper.ReadInConfig()
-	if err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
-	}
-}
-
-func initInput(args []string) error {
-	if len(args) == 1 {
-		summaryFn.SearchString = args[0]
-	}
-
-	if summaryFn.SearchString == "" {
-		return errors.New(fmt.Sprintf("You must pass a search string"))
-	}
-
+func (summaryFn *SummaryFn) initInputFlags(args []string) {
 	if summaryFn.TwitterFnURL == "" {
 		summaryFn.TwitterFnURL = viper.GetString("twitter-fn-url")
 	}
@@ -141,6 +95,4 @@ func initInput(args []string) error {
 	if summaryFn.WatsonFnURL == "" {
 		summaryFn.WatsonFnURL = viper.GetString("watson-fn-url")
 	}
-
-	return nil
 }

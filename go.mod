@@ -1,4 +1,4 @@
-module github.com/maximilien/kneelinger
+module github.com/maximilien/knfun
 
 go 1.12
 

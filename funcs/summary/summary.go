@@ -23,6 +23,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/maximilien/knfun/funcs/common"
+
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -37,10 +39,6 @@ type Tweet struct {
 }
 
 type ClassifiedImage struct {
-	ClassifiedImage ImageClassified `json:"ClassifiedImage"`
-}
-
-type ImageClassified struct {
 	SourceURL   string       `json:"source_url"`
 	ResolvedURL string       `json:"resolved_url"`
 	Classifiers []Classifier `json:"classifiers"`
@@ -59,17 +57,10 @@ type Class struct {
 }
 
 type SummaryFn struct {
-	SearchString string
-	Count        int
-
-	Timeout int
-	Output  string
+	common.CommonFn
 
 	TwitterFnURL string
 	WatsonFnURL  string
-
-	StartServer bool
-	Port        int
 }
 
 func (summaryFn *SummaryFn) Summary() ([]ClassifiedTweet, error) {
@@ -159,8 +150,6 @@ func (summaryFn *SummaryFn) classifyImage(imageURL string) (ClassifiedImage, err
 		return ClassifiedImage{}, err
 	}
 
-	// fmt.Printf("---->watsonFn.Classify.Body: %s\n", string(body))
-
 	classifiedImage := ClassifiedImage{}
 	err = json.Unmarshal(body, &classifiedImage)
 	if err != nil {
@@ -195,10 +184,6 @@ func (summaryFn *SummaryFn) collectClassifiedTweets() ([]ClassifiedTweet, error)
 			if err != nil {
 				return []ClassifiedTweet{}, err
 			}
-
-			// fmt.Printf("\n=====> imageURL: %#v\n", imageURL)
-			// fmt.Printf("=====> classifiedImage: %#v\n", classifiedImage)
-
 			classifiedImages = append(classifiedImages, classifiedImage)
 		}
 		classifiedTweet := ClassifiedTweet{
@@ -216,8 +201,8 @@ func (cTweet ClassifiedTweet) ToText() string {
 	sb := bytes.NewBufferString("")
 	sb.WriteString(fmt.Sprintf("\n🐦 %s\n", cTweet.Text))
 	for i, cImage := range cTweet.ClassifiedImages {
-		sb.WriteString(fmt.Sprintf("\n%d.  📸 URL: `%s`\n", i, cImage.ClassifiedImage.ResolvedURL))
-		for _, classifier := range cImage.ClassifiedImage.Classifiers {
+		sb.WriteString(fmt.Sprintf("\n%d.  📸 URL: `%s`\n", i, cImage.ResolvedURL))
+		for _, classifier := range cImage.Classifiers {
 			sb.WriteString(fmt.Sprintf("\n%d.  📚 classifier: `%s`\n", i, classifier.Name))
 			for _, class := range classifier.Classes {
 				sb.WriteString(fmt.Sprintf("\n.   📸 is a `%s` with `%1.3f` confidence\n", class.Name, class.Score))

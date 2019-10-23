@@ -22,28 +22,25 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	homedir "github.com/mitchellh/go-homedir"
 )
 
 var (
-	cfgFile         string
 	classifyImageFn *ClassifyImageFn
 )
 
 func NewWatsonCmd() *cobra.Command {
 	classifyImageFn = &ClassifyImageFn{
-		keys: watsonKeys{},
+		keys: keys{},
 	}
 
-	cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(classifyImageFn.InitConfig)
 
 	watsonCmd := &cobra.Command{
 		Use:   "watson",
 		Short: "watson root function",
 		Long:  `Various functions over the Watson API`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			initWatsonKeys()
+			classifyImageFn.initWatsonKeysFlags()
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
@@ -63,13 +60,18 @@ func NewWatsonCmd() *cobra.Command {
 		Use:   "classify",
 		Short: "classify image",
 		Long:  `classify an image using the Watson APIs`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return classifyImageFn.initClassifyCmdInputFlags(args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return classify(cmd, args)
+			return classifyImageFn.classify(cmd, args)
 		},
 	}
 
-	addWatsonCmdFlags(watsonCmd)
-	addClassifyCmdFlags(classifyCmd)
+	classifyImageFn.addWatsonCmdFlags(watsonCmd)
+
+	classifyImageFn.AddCommonCmdFlags(classifyCmd)
+	classifyImageFn.addClassifyCmdFlags(classifyCmd)
 
 	watsonCmd.AddCommand(vrCmd)
 	vrCmd.AddCommand(classifyCmd)
@@ -83,12 +85,7 @@ func Execute() error {
 
 // Private
 
-func classify(cmd *cobra.Command, args []string) error {
-	err := initClassifyInput(args)
-	if err != nil {
-		return err
-	}
-
+func (classifyImageFn *ClassifyImageFn) classify(cmd *cobra.Command, args []string) error {
 	if classifyImageFn.StartServer {
 		http.HandleFunc("/", classifyImageFn.ClassifyHandler)
 		return http.ListenAndServe(fmt.Sprintf(":%d", classifyImageFn.Port), nil)
@@ -104,48 +101,21 @@ func classify(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func addWatsonCmdFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.watson.yaml)")
-
-	cmd.PersistentFlags().StringVar(&classifyImageFn.keys.apiKey, "api-key", "", "watson API key")
-	cmd.PersistentFlags().StringVar(&classifyImageFn.keys.apiURL, "api-url", "", "watson API URL")
-	cmd.PersistentFlags().StringVar(&classifyImageFn.keys.apiURL, "api-version", "", "watson API version")
+func (classifyImageFn *ClassifyImageFn) addWatsonCmdFlags(cmd *cobra.Command) {
+	cmd.PersistentFlags().StringVar(&classifyImageFn.keys.watsonAPIKey, "watson-api-key", "", "watson API key")
+	cmd.PersistentFlags().StringVar(&classifyImageFn.keys.watsonAPIURL, "watson-api-url", "", "watson API URL")
+	cmd.PersistentFlags().StringVar(&classifyImageFn.keys.watsonAPIURL, "watson-api-version", "", "watson API version")
 
 	viper.BindPFlag("api-key", cmd.PersistentFlags().Lookup("api-key"))
 	viper.BindPFlag("api-url", cmd.PersistentFlags().Lookup("api-url"))
 	viper.BindPFlag("api-version", cmd.PersistentFlags().Lookup("api-version"))
 }
 
-func addClassifyCmdFlags(cmd *cobra.Command) {
+func (classifyImageFn *ClassifyImageFn) addClassifyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&classifyImageFn.ImageURL, "image-url", "u", "", "the URL of the image to classify")
-	cmd.Flags().StringVarP(&classifyImageFn.Output, "output", "o", "text", "the output: text, yaml, or json, of results")
-
-	cmd.Flags().BoolVarP(&classifyImageFn.StartServer, "start-server", "S", false, "start as a server")
-	cmd.Flags().IntVarP(&classifyImageFn.Port, "port", "p", 8080, "the port for the server")
 }
 
-func initConfig() {
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-	} else {
-		home, err := homedir.Dir()
-		if err != nil {
-			os.Exit(-1)
-		}
-
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".watson")
-	}
-
-	viper.AutomaticEnv()
-
-	err := viper.ReadInConfig()
-	if err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
-	}
-}
-
-func initClassifyInput(args []string) error {
+func (classifyImageFn *ClassifyImageFn) initClassifyCmdInputFlags(args []string) error {
 	if len(args) == 1 {
 		classifyImageFn.ImageURL = args[0]
 	}
@@ -157,10 +127,16 @@ func initClassifyInput(args []string) error {
 	return nil
 }
 
-func initWatsonKeys() {
-	if classifyImageFn.keys == (watsonKeys{}) {
-		classifyImageFn.keys.apiKey = viper.GetString("api-key")
-		classifyImageFn.keys.apiURL = viper.GetString("api-url")
-		classifyImageFn.keys.apiVersion = viper.GetString("api-version")
+func (classifyImageFn *ClassifyImageFn) initWatsonKeysFlags() {
+	if classifyImageFn.keys.watsonAPIKey == "" {
+		classifyImageFn.keys.watsonAPIKey = viper.GetString("watson-api-key")
+	}
+
+	if classifyImageFn.keys.watsonAPIURL == "" {
+		classifyImageFn.keys.watsonAPIURL = viper.GetString("watson-api-url")
+	}
+
+	if classifyImageFn.keys.watsonAPIVersion == "" {
+		classifyImageFn.keys.watsonAPIVersion = viper.GetString("watson-api-version")
 	}
 }

@@ -15,35 +15,31 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	homedir "github.com/mitchellh/go-homedir"
 )
 
 var (
-	cfgFile  string
 	searchFn *SearchFn
 )
 
 func NewTwitterCmd() *cobra.Command {
 	searchFn = &SearchFn{
-		keys: twitterKeys{},
+		keys: keys{},
 	}
 
-	cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(searchFn.InitConfig)
 
 	twitterCmd := &cobra.Command{
 		Use:   "twitter",
 		Short: "Twitter root function",
 		Long:  `Various functions over the Twitter API`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			initTwitterKeys()
+			searchFn.initTwitterKeysFlags()
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
@@ -58,13 +54,17 @@ func NewTwitterCmd() *cobra.Command {
 		Short: "Search for tweets and extract contents",
 		Long: `Searches twitter for tweets matching some criteria
 and responds with with content of that tweet`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return searchFn.InitCommonInputFlags(args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return search(cmd, args)
+			return searchFn.search(cmd, args)
 		},
 	}
 
-	addTwitterCmdFlags(twitterCmd)
-	addSearchCmdFlags(searchCmd)
+	searchFn.addTwitterCmdFlags(twitterCmd)
+
+	searchFn.AddCommonCmdFlags(searchCmd)
 
 	twitterCmd.AddCommand(searchCmd)
 
@@ -77,12 +77,7 @@ func Execute() error {
 
 // Private
 
-func search(cmd *cobra.Command, args []string) error {
-	err := initSearchInput(args)
-	if err != nil {
-		return err
-	}
-
+func (searchFn *SearchFn) search(cmd *cobra.Command, args []string) error {
 	if searchFn.StartServer {
 		http.HandleFunc("/", searchFn.SearchHandler)
 		return http.ListenAndServe(fmt.Sprintf(":%d", searchFn.Port), nil)
@@ -98,68 +93,32 @@ func search(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func addTwitterCmdFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.twiter.yaml)")
+func (searchFn *SearchFn) addTwitterCmdFlags(cmd *cobra.Command) {
+	cmd.PersistentFlags().StringVar(&searchFn.keys.twitterAPIKey, "twitter-api-key", "", "twitter API key")
+	cmd.PersistentFlags().StringVar(&searchFn.keys.twitterAPISecretKey, "twitter-api-secret-key", "", "twitter API secret key")
+	cmd.PersistentFlags().StringVar(&searchFn.keys.twitterAccessToken, "twitter-access-token", "", "twitter access token")
+	cmd.PersistentFlags().StringVar(&searchFn.keys.twitterAccessTokenSecret, "twitter-access-token-secret", "", "twitter access token secret")
 
-	cmd.PersistentFlags().StringVar(&searchFn.keys.apiKey, "api-key", "", "twitter API key")
-	cmd.PersistentFlags().StringVar(&searchFn.keys.apiSecretKey, "api-secret-key", "", "twitter API secret key")
-	cmd.PersistentFlags().StringVar(&searchFn.keys.accessToken, "access-token", "", "twitter access token")
-	cmd.PersistentFlags().StringVar(&searchFn.keys.accessTokenSecret, "access-token-secret", "", "twitter access token secret")
-
-	viper.BindPFlag("api-key", cmd.PersistentFlags().Lookup("api-key"))
-	viper.BindPFlag("api-secret-key", cmd.PersistentFlags().Lookup("api-secret-key"))
-	viper.BindPFlag("access-token", cmd.PersistentFlags().Lookup("access-token"))
-	viper.BindPFlag("access-token-secret", cmd.PersistentFlags().Lookup("access-token-secret"))
+	viper.BindPFlag("twitter-api-key", cmd.PersistentFlags().Lookup("twitter-api-key"))
+	viper.BindPFlag("twitter-api-secret-key", cmd.PersistentFlags().Lookup("twitter-api-secret-key"))
+	viper.BindPFlag("twitter-access-token", cmd.PersistentFlags().Lookup("twitter-access-token"))
+	viper.BindPFlag("twitter-access-token-secret", cmd.PersistentFlags().Lookup("twitter-access-token-secret"))
 }
 
-func addSearchCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&searchFn.SearchString, "search-string", "s", "", "the string to search for")
-	cmd.Flags().IntVarP(&searchFn.Count, "count", "c", 10, "the max number of results")
-
-	cmd.Flags().StringVarP(&searchFn.Output, "output", "o", "text", "the output: text, yaml, or json, of results")
-
-	cmd.Flags().BoolVarP(&searchFn.StartServer, "start-server", "S", false, "start as a server")
-	cmd.Flags().IntVarP(&searchFn.Port, "port", "p", 8080, "the port for the server")
-}
-
-func initConfig() {
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-	} else {
-		home, err := homedir.Dir()
-		if err != nil {
-			os.Exit(-1)
-		}
-
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".twitter")
+func (searchFn *SearchFn) initTwitterKeysFlags() {
+	if searchFn.keys.twitterAPIKey == "" {
+		searchFn.keys.twitterAPIKey = viper.GetString("twitter-api-key")
 	}
 
-	viper.AutomaticEnv()
-
-	err := viper.ReadInConfig()
-	if err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
-	}
-}
-
-func initSearchInput(args []string) error {
-	if len(args) == 1 {
-		searchFn.SearchString = args[0]
+	if searchFn.keys.twitterAPISecretKey == "" {
+		searchFn.keys.twitterAPISecretKey = viper.GetString("twitter-api-secret-key")
 	}
 
-	if searchFn.SearchString == "" {
-		return errors.New(fmt.Sprintf("You must pass a search string"))
+	if searchFn.keys.twitterAccessToken == "" {
+		searchFn.keys.twitterAccessToken = viper.GetString("twitter-access-token")
 	}
 
-	return nil
-}
-
-func initTwitterKeys() {
-	if searchFn.keys == (twitterKeys{}) {
-		searchFn.keys.apiKey = viper.GetString("api-key")
-		searchFn.keys.apiSecretKey = viper.GetString("api-secret-key")
-		searchFn.keys.accessToken = viper.GetString("access-token")
-		searchFn.keys.accessTokenSecret = viper.GetString("access-token-secret")
+	if searchFn.keys.twitterAccessTokenSecret == "" {
+		searchFn.keys.twitterAccessTokenSecret = viper.GetString("twitter-access-token-secret")
 	}
 }

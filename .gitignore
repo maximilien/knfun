@@ -8,6 +8,7 @@ main
 twitter-fn
 watson-fn
 summary-fn
+.knfun*
 
 # Test binary, build with `go test -c`
 *.test

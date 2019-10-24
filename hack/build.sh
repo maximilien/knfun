@@ -17,6 +17,7 @@
 set -o pipefail
 
 source_dirs="funcs"
+docker_username=${DOCKER_USERNAME:-}
 
 # Store for later
 if [ -z "$1" ]; then
@@ -80,6 +81,26 @@ run() {
     exit 0
   fi
 
+  # Run only docker-images
+  if $(has_flag --docker-images -d); then
+    if [[ -z "${docker_username}" ]]; then
+      echo "Please set environment variable DOCKER_USERNAME"
+      exit 1
+    fi
+    docker_build_images
+    exit 0
+  fi
+
+  # Run only docker-push
+  if $(has_flag --docker-push); then
+    if [[ -z "${docker_username}" ]]; then
+      echo "Please set environment variable DOCKER_USERNAME"
+      exit 1
+    fi
+    docker_push_images
+    exit 0
+  fi
+
   # Default flow
   codegen
   go_build
@@ -102,6 +123,32 @@ codegen() {
 
   # Auto generate cli docs
   generate_docs
+}
+
+docker_build_images() {
+  echo "🚧 🐳 build images"
+
+  echo "   🚧 🐳 twitter-fn"
+  docker build -f ./funcs/twitter/Dockerfile -t ${DOCKER_USERNAME}/twitter-fn .
+
+  echo "   🚧 🐳 watson-fn"
+  docker build -f ./funcs/watson/Dockerfile -t ${DOCKER_USERNAME}/watson-fn .
+
+  echo "   🚧 🐳 summary-fn"
+  docker build -f ./funcs/summary/Dockerfile -t ${DOCKER_USERNAME}/summary-fn .
+}
+
+docker_push_images() {
+  echo "🐳 push images"
+
+  echo "   🐳 twitter-fn"
+  docker push ${DOCKER_USERNAME}/twitter-fn
+
+  echo "   🐳 watson-fn"
+  docker push ${DOCKER_USERNAME}/watson-fn
+
+  echo "   🐳 summary-fn"
+  docker push ${DOCKER_USERNAME}/summary-fn
 }
 
 go_fmt() {
@@ -292,6 +339,7 @@ with the following options:
 -f  --fast                    Only compile (without dep update, formatting, testing, doc gen)
 -t  --test                    Run tests when used with --fast or --watch
 -c  --codegen                 Runs formatting, doc gen and update without compiling/testing
+-d  --docker-images           Generates Docker images for each funcs (twitter-fn, watson-fn, summary-fn)
 -w  --watch                   Watch for source changes and recompile in fast mode
 -x  --all                     Build binaries for all platforms
 -h  --help                    Display this help message
@@ -311,6 +359,7 @@ Examples:
 * Run only tests: .................... build.sh --test
 * Compile with tests: ................ build.sh -f -t
 * Automatic recompilation: ........... build.sh --watch
+* Build Docker images: ............... build.sh --docker-images
 * Build cross platform binaries: ..... build.sh --all
 EOT
 }

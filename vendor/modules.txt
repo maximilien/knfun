@@ -1,4 +1,4 @@
-# github.com/IBM/go-sdk-core v1.0.0
+# github.com/IBM/go-sdk-core v1.0.1
 github.com/IBM/go-sdk-core/core
 # github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a
 github.com/asaskevich/govalidator
@@ -80,5 +80,5 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/norm
 # gopkg.in/go-playground/validator.v9 v9.30.0
 gopkg.in/go-playground/validator.v9
-# gopkg.in/yaml.v2 v2.2.2
+# gopkg.in/yaml.v2 v2.2.4
 gopkg.in/yaml.v2

@@ -28,7 +28,7 @@ RUN apk add --no-cache ca-certificates
 COPY --from=builder /app/watson-fn /watson-fn
 
 # Run the web service on container startup.
-CMD ["/watson-fn", "vr", "classify", "http://pbs.twimg.com/media/EHb34-KXYAESI46.jpg", "-o", "json", "-S", "-p", "8081", \
+CMD ["/watson-fn", "vr", "classify", "http://pbs.twimg.com/media/EHb34-KXYAESI46.jpg", "-o", "json", "-S", \
 	                "--watson-api-key", "$WATSON_API_KEY", \
 	                "--watson-api-url", "$WATSON_API_URL", \
 	                "--watson-api-version", "$WATSON_API_VERSION" \

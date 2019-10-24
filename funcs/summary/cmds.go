@@ -33,9 +33,10 @@ func NewSummaryCmd() *cobra.Command {
 	cobra.OnInitialize(summaryFn.InitConfig)
 
 	summaryCmd := &cobra.Command{
-		Use:   "summary",
+		Use:   "summary [SEARCH_STRING]",
 		Short: "Summary root function",
-		Long:  `Summarizes the TwitterFn and WatsonFn APIs funcs`,
+		Long: `Summarizes the TwitterFn and WatsonFn APIs funcs
+searching for tweets (with images) that contains SEARCH_STRING`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			summaryFn.initInputFlags(args)
 			return summaryFn.InitCommonInputFlags(args)
@@ -51,7 +52,6 @@ func NewSummaryCmd() *cobra.Command {
 	}
 
 	summaryFn.AddCommonCmdFlags(summaryCmd)
-
 	summaryFn.addSummaryCmdFlags(summaryCmd)
 
 	return summaryCmd
@@ -85,6 +85,9 @@ func (summaryFn *SummaryFn) summary(cmd *cobra.Command, args []string) error {
 func (summaryFn *SummaryFn) addSummaryCmdFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVar(&summaryFn.TwitterFnURL, "twitter-fn-url", "", "twitter API func URL")
 	cmd.PersistentFlags().StringVar(&summaryFn.WatsonFnURL, "watson-fn-url", "", "watson API func URL")
+
+	viper.BindPFlag("twitter-fn-url", cmd.PersistentFlags().Lookup("twitter-fn-url"))
+	viper.BindPFlag("watson-fn-url", cmd.PersistentFlags().Lookup("watson-fn-url"))
 }
 
 func (summaryFn *SummaryFn) initInputFlags(args []string) {

@@ -57,10 +57,11 @@ func NewWatsonCmd() *cobra.Command {
 	}
 
 	classifyCmd := &cobra.Command{
-		Use:   "classify",
+		Use:   "classify [IMAGE_URL]",
 		Short: "classify image",
-		Long:  `classify an image using the Watson APIs`,
+		Long:  `classify an image (via its URL) using the Watson APIs`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			classifyImageFn.initWatsonKeysFlags()
 			return classifyImageFn.initClassifyCmdInputFlags(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -68,9 +69,8 @@ func NewWatsonCmd() *cobra.Command {
 		},
 	}
 
-	classifyImageFn.addWatsonCmdFlags(watsonCmd)
-
 	classifyImageFn.AddCommonCmdFlags(classifyCmd)
+	classifyImageFn.addWatsonCmdFlags(watsonCmd)
 	classifyImageFn.addClassifyCmdFlags(classifyCmd)
 
 	watsonCmd.AddCommand(vrCmd)
@@ -106,9 +106,9 @@ func (classifyImageFn *ClassifyImageFn) addWatsonCmdFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVar(&classifyImageFn.keys.watsonAPIURL, "watson-api-url", "", "watson API URL")
 	cmd.PersistentFlags().StringVar(&classifyImageFn.keys.watsonAPIURL, "watson-api-version", "", "watson API version")
 
-	viper.BindPFlag("watson-api-key", cmd.PersistentFlags().Lookup("api-key"))
-	viper.BindPFlag("watson-api-url", cmd.PersistentFlags().Lookup("api-url"))
-	viper.BindPFlag("watson-api-version", cmd.PersistentFlags().Lookup("api-version"))
+	viper.BindPFlag("watson-api-key", cmd.PersistentFlags().Lookup("watson-api-key"))
+	viper.BindPFlag("watson-api-url", cmd.PersistentFlags().Lookup("watson-api-url"))
+	viper.BindPFlag("watson-api-version", cmd.PersistentFlags().Lookup("watson-api-version"))
 }
 
 func (classifyImageFn *ClassifyImageFn) addClassifyCmdFlags(cmd *cobra.Command) {

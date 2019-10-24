@@ -50,11 +50,12 @@ func NewTwitterCmd() *cobra.Command {
 	}
 
 	searchCmd := &cobra.Command{
-		Use:   "search",
+		Use:   "search [SEARCH_STRING]",
 		Short: "Search for tweets and extract contents",
-		Long: `Searches twitter for tweets matching some criteria
+		Long: `Searches twitter for tweets matching some string criteria
 and responds with with content of that tweet`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			searchFn.initTwitterKeysFlags()
 			return searchFn.InitCommonInputFlags(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -62,9 +63,8 @@ and responds with with content of that tweet`,
 		},
 	}
 
-	searchFn.addTwitterCmdFlags(twitterCmd)
-
 	searchFn.AddCommonCmdFlags(searchCmd)
+	searchFn.addTwitterCmdFlags(twitterCmd)
 
 	twitterCmd.AddCommand(searchCmd)
 

@@ -24,6 +24,23 @@ The first demo uses three functions in a live demo setting. The following diagra
 
 Of course, both the *TwitterFn* and *WatsonFn* require credentials to execute. This means that the keys for both the *TwitterFn* and *WatsonFn* are also required, however, to simplify the discussion, they are somtimes ommited in diagram and some other places.
 
+Table of Contents
+=================
+
+  * [Introduction](#knfun)
+  * [Setup](#setup)
+  	* [Credentials](#credentials)
+		* [Twitter](#twitter)
+		* [Watson](#watson)
+  * [Build](#build)
+  * [Test](#test)
+  	* [twitter-fn](#twitter-fn)
+	* [watson-fn](#watson-fn)
+	* [summary-fn](#summary-fn)
+	* [Credentials Config](#credentials-config)
+  * [Deploy](#deploy)
+  * [Run](#run)
+
 # Setup
 
 This repository is self-contained except for the following dependencies which you should have met before getting started.
@@ -35,13 +52,13 @@ This repository is self-contained except for the following dependencies which yo
 
 Once these four dependencies are met, continue below with steps to get and set your APIs credentials, build, test, and deploy the functions for the demos.
 
-# Credentials
+## Credentials
 
 As mentioned above, you need to get credentials for both the [Twitter API](https://developer.twitter.com/en/docs) and the [IBM Watson API](https://cloud.ibm.com/apidocs/visual-recognition/visual-recognition-v3). Once you do, then you should be able to follow the steps below. 
 
 To facilitate using and passing these secrets in the commands, I recommend setting environment variables for each string in your shell. Feel free to use other means but in the description below I am assuming that the secret values are set to the environment variables correspondingly named.
 
-## Twitter
+### Twitter
 
 Once you have access to the Twitter API, you will have four different keys (as strings). They are:
 
@@ -59,7 +76,7 @@ export TWITTER_ACCESS_TOKEN=<your Twitter access token value here>
 export TWITTER_ACCESS_TOKEN_SECRET=<your Twitter access token secret value here>
 ```
 
-## Watson
+### Watson
 
 Access to the IBM Watson API requires one secret and two constant values. They are:
 
@@ -102,7 +119,7 @@ These are designed as both CLIs and server functions that you can test locally a
 
 Let's first explore how to test the functions locally.
 
-## TwitterFn
+## twitter-fn
 
 For each function you can run them locally as a CLI to get immediate response. You can also run them as a local server and use your browser to see the responses changing input. For example, the following will display recent tweets that have the word `NBA`
 
@@ -128,7 +145,7 @@ Then open your browser at `http://localhost:8080` or do `curl http://localhost:8
 
 To see what other options are available for the `twitter-fn` `search` function get the CLI help with: `./twitter-fn search --help`
 
-## WatsonFn
+## watson-fn
 
 Similarly for the `watson-fn` function you can test it locally with any image for which you have a public URL with the following.
 
@@ -150,7 +167,7 @@ To run this as a server and see JSON output on your browser or with curl, do the
 
 You can change the input at the browser by passing the URL with the `q` or `query` URL paramter. For example: `http://localhjost:8081?http://pbs.twimg.com/media/EHpWVAvWoAEfVzO.jpg&o=json`. If you can the `o` to `text` then the image classification will display as text.
 
-## SummaryFn
+## summary-fn
 
 Finally, you can test the `summary-fn` function locally after running the `twitter-fn` and `watson-fn` as servers. For instance, if they are running respectively at ports `8080` and `8081`, use the following to run the `summary-fn`.
 

@@ -1,8 +1,8 @@
 # knfun
 
-Knfun is a set of Knative micro-services / micro-functions to illustrate the end-to-end developer experience.
+Knfun is a set of Knative micro-services / micro-functions that are intended to be used for live demos in order to illustrate the end-to-end developer experience of using Knative and the `kn` CLI.
 
-The first demo is to use three functions in a live settings. The following diagram is a sketch of this demo
+The first demo uses three functions in a live demo setting. The following diagram is a sketch of this demo.
 
 ![Demo sketch](docs/demo1-sketch.png)
 
@@ -14,46 +14,46 @@ The first demo is to use three functions in a live settings. The following diagr
 	_out_: recent tweets with images
 
 2. *WatsonFn* visual recognition image classifier function (via IBM's [Watson APIs](https://cloud.ibm.com/apidocs/visual-recognition/visual-recognition-v3))
-	_in_: image URLs
+	_in_: image URL
 	_out_: image features (class) with confidence (score)
 
 3. *SummaryFn* function
-	_in_: search string and twitterFn and WatsonFn
+	_in_: search string and twitterFn and WatsonFn URLs
 	_in_: count (max number of tweets)
 	_out_: HTML page displaying summary
 
-Of course, both the *TwitterFn* and *WatsonFn* require credentials to execute. This means that the keys for both the *TwitterFn* and *WatsonFn* are also required, however, to simplify the discussion, they are ommited.
+Of course, both the *TwitterFn* and *WatsonFn* require credentials to execute. This means that the keys for both the *TwitterFn* and *WatsonFn* are also required, however, to simplify the discussion, they are somtimes ommited in diagram and some other places.
 
 # Setup
 
-This repository is self-contained except for the following dependencies which you should have before getting started.
+This repository is self-contained except for the following dependencies which you should have met before getting started.
 
 1. Go version go1.12.x or later. Go to [Golang download](https://golang.org/dl/) page to get the version for your OS.
 2. [Docker engine](https://docs.docker.com/engine/installation/) for your machine. Specifically ensure you can execute the `docker` executable at the command line.
 3. [Knative](https://knative.dev/) cluster. Depending on your Kubernetes cluster provider you can find different means for [getting Knative installed](https://knative.dev/docs/install/) onto your cluster.
 4. [Knative's `kn` client](https://github.com/knative/client). Once you have your Knative cluster, follow the steps to build `kn` or get one from the released builds.
 
-Once these four dependencies are met, continue below with steps to get credentials, build, test, and deploy the functions for the demos.
+Once these four dependencies are met, continue below with steps to get and set your APIs credentials, build, test, and deploy the functions for the demos.
 
 # Credentials
 
 As mentioned above, you need to get credentials for both the [Twitter API](https://developer.twitter.com/en/docs) and the [IBM Watson API](https://cloud.ibm.com/apidocs/visual-recognition/visual-recognition-v3). Once you do, then you should be able to follow the steps below. 
 
-To facilitate using and passing these secrets in the commands, I recommend setting environment variables for each string for your shell. Feel free to use other means but in the description below I am assuming that the secret values are set to the environment variables named.
+To facilitate using and passing these secrets in the commands, I recommend setting environment variables for each string in your shell. Feel free to use other means but in the description below I am assuming that the secret values are set to the environment variables correspondingly named.
 
 ## Twitter
 
 Once you have access to the Twitter API, you will have four different keys (as strings). They are:
 
 1. Twitter API key - TWITTER_API_KEY
-2. Twitter API secret key - TWITTER_API_SECRE_KEY
-3. Twitter Access Token - TWTTER_ACCESS_TOKEN
+2. Twitter API secret key - TWITTER_API_SECRET_KEY
+3. Twitter Access Token - TWITTER_ACCESS_TOKEN
 4. Twitter Access Token secret - TWITTER_ACCESS_TOKEN_SECRET
 
 To set these on your shell, do the following replacing the content in `<>` with your key value
 
 ```bash
-export TWITTER_API_key=<your Twitter API key value here>
+export TWITTER_API_KEY=<your Twitter API key value here>
 export TWITTER_API_SECRET_KEY=<your Twitter API secret key value here>
 export TWITTER_ACCESS_TOKEN=<your Twitter access token value here>
 export TWITTER_ACCESS_TOKEN_SECRET=<your Twitter access token secret value here>
@@ -75,7 +75,7 @@ export WATSON_API_VERSION=2018-03-19
 
 # Build
 
-After cloning the repository. You can build all functions with the following command:
+After cloning this repository. You can build all functions with the following command:
 
 ```bash
 ./hack/build.sh
@@ -96,7 +96,7 @@ LICENSE    docs       go.mod     hack       twitter-fn watson-fn
 README.md  funcs      go.sum     summary-fn vendor
 ```
 
-These are designed as both CLI and server functions that you can test locally and deploy on Knative.
+These are designed as both CLIs and server functions that you can test locally and deploy on Knative.
 
 # Test
 
@@ -104,7 +104,7 @@ Let's first explore how to test the functions locally.
 
 ## TwitterFn
 
-For each function you can run them locally as a CLI to get immediate response or as a server and use your browser to see the response. The following will display recent tweets that have the word `NBA`
+For each function you can run them locally as a CLI to get immediate response. You can also run them as a local server and use your browser to see the responses changing input. For example, the following will display recent tweets that have the word `NBA`
 
 ```bash
 ./twitter-fn search NBA -c 20 -o text \
@@ -114,10 +114,10 @@ For each function you can run them locally as a CLI to get immediate response or
 			 --twitter-access-token-secret $TWITTER_ACCESS_TOKEN_SECRET \
 ```
 
-To run this as a server and see JSON output on your browser or with curl, do the following:
+To run this function as a server and see JSON output on your browser or with curl, do the following:
 
 ```bash
-./twitter-fn search NBA -c 20 -o text -S -p 8080 \
+./twitter-fn search NBA -c 20 -o json -S -p 8080 \
 			 --twitter-api-key $TWITTER_API_KEY \
 			 --twitter-api-secret-key $TWITTER_API_SECRET_KEY \
 			 --twitter-access-token $TWITTER_ACCESS_TOKEN \
@@ -130,11 +130,10 @@ To see what other options are available for the `twitter-fn` `search` function g
 
 ## WatsonFn
 
-Similarly for the `watson-fn` function you can test locally with any image for which you have the URL with the following.
-
+Similarly for the `watson-fn` function you can test it locally with any image for which you have a public URL with the following.
 
 ```bash
-./watson-fn vr classify http://... -o text \
+./watson-fn vr classify http://pbs.twimg.com/media/EHpWVAvWoAEfVzO.jpg -o text \
 			   --watson-api-key $WATSON_API_KEY \
 			   --watson-api-url $WATSON_API_URL \
 			   --watson-api-version $WATSON_API_VERSION \
@@ -143,37 +142,37 @@ Similarly for the `watson-fn` function you can test locally with any image for w
 To run this as a server and see JSON output on your browser or with curl, do the following:
 
 ```bash
-./twitter-fn search NBA -c 20 -o text -S -p 8080 \
-			 --twitter-api-key $TWITTER_API_KEY \
-			 --twitter-api-secret-key $TWITTER_API_SECRET_KEY \
-			 --twitter-access-token $TWITTER_ACCESS_TOKEN \
-			 --twitter-access-token-secret $TWITTER_ACCESS_TOKEN_SECRET \
+./watson-fn vr classify http://pbs.twimg.com/media/EHpWVAvWoAEfVzO.jpg -o json -p 8081 \
+			   --watson-api-key $WATSON_API_KEY \
+			   --watson-api-url $WATSON_API_URL \
+			   --watson-api-version $WATSON_API_VERSION \
 ```
+
+You can change the input at the browser by passing the URL with the `q` or `query` URL paramter. For example: `http://localhjost:8081?http://pbs.twimg.com/media/EHpWVAvWoAEfVzO.jpg&o=json`. If you can the `o` to `text` then the image classification will display as text.
 
 ## SummaryFn
 
-Finally, the `summary-fn` function can be tested locally after running the `twitter-fn` and `watson-fn` servers. For instance, respectively at ports `8080` and `8081`.
-
+Finally, you can test the `summary-fn` function locally after running the `twitter-fn` and `watson-fn` as servers. For instance, if they are running respectively at ports `8080` and `8081`, use the following to run the `summary-fn`.
 
 ```bash
-./summary-fn NBA  -o text -c 10 -o text \
-			   --twitter-fn-url http://localhost:8080 \
-			   --watson-fn-url http://localhost:8081 \
+./summary-fn NBA -o text -c 10 -o text \
+ 	     --twitter-fn-url http://localhost:8080 \
+	     --watson-fn-url http://localhost:8081 \
 ```
 
-To run this as a server and see output on your browser or with curl, do the following:
+To run `summary-fn` as a server and see output on your browser or with curl, do the following:
 
 ```bash
-./summary-fn NBA  -o text -c 10 -o text -S -p 8082 \
-			   --twitter-fn-url http://localhost:8080 \
-			   --watson-fn-url http://localhost:8081 \
+./summary-fn NBA -o text -c 10 -o text -S -p 8082 \
+             --twitter-fn-url http://localhost:8080 \
+             --watson-fn-url http://localhost:8081 \
 ```
 
 Open your browser at `http://localhost:8082` or `curl http://localhost:8082`
 
 ## Credentials config
 
-You can avoid passing all the credentials everytime by creating a file named `.knfun.yaml` in your home directory and adding the credential values. The follwing command will create that file and set the values from the environment variables we discussed above.
+You can avoid passing all the credentials everytime by creating a file named `.knfun.yaml` in your home directory and adding the credential values in it. The following command will create that file and set the values from the environment variables we discussed above.
 
 ```bash
 touch ~/.knfun.yaml
@@ -181,7 +180,7 @@ cat <<EOF >> ~/.knfun.yaml
 twitter-api-key: $TWITTER_API_KEY
 twitter-api-secret-key: $TWITTER_API_SECRET_KEY
 twitter-access-token: $TWITTER_ACCESS_TOKEN
-twitter-access-token-secret: $TWITTER_ACCESS_TOKEN_KEY
+twitter-access-token-secret: $TWITTER_ACCESS_TOKEN_SECRET
 
 # watson-fn
 watson-api-key: $WATSON_API_KEY
@@ -207,7 +206,7 @@ You can simply do:
 
 # Deploy
 
-In order to deploy into a Knative cluster, you must first create Docker images and publish them into a repository. The `./hack/deploy.sh --docker-images` and `./hack/deploy.sh --docker-push` will respectively create Docker images and push them in your Docker Hub for you. You simply need to make sure the `docker` executable is visible to your shell and that the environment variable `DOCKER_USERNAME` is set to your Docker Hub user ID.
+In order to deploy into a Knative cluster, you must first create images and publish them into a repository. We will be using Docker for that purpose. The `./hack/deploy.sh --docker-images` and `./hack/deploy.sh --docker-push` will respectively create Docker images and push them in your [Docker Hub](https://docker.io) account for you. You simply need to make sure the `docker` executable is visible to your shell and that the environment variable `DOCKER_USERNAME` is set to your Docker Hub user ID.
 
 ```bash
 ./hack/build.sh --docker-images
@@ -294,12 +293,13 @@ http://watson-fn.default.knative-cluster.us-south.containers.cloud.ibm.com
 
 ## Summary
 
-You need to then set the `TWITTER_FN_URL` and `WATSON_FN_URL` to the URL that `kn` output for the respective function. For instance:
+You need to then set the environment variables `TWITTER_FN_URL` and `WATSON_FN_URL` to the URLs that `kn service create ...` showed for the respective function. For instance:
 
 ```bash
 export TWITTER_FN_URL=twitter-fn.knative-cluster.us-south.containers.cloud.ibm.com
 export WATSON_FN_URL=watson-fn.knative-cluster.us-south.containers.cloud.ibm.com
 ```
+Deploy the `summary-fn` service with:
 
 ```bash
 ./kn service create summary-fn \
@@ -309,6 +309,4 @@ export WATSON_FN_URL=watson-fn.knative-cluster.us-south.containers.cloud.ibm.com
 ...
 ```
 
-
-You can test the `summary-fn` function by going to the generated function URL with your browser or with `curl`.
-
+You can test the `summary-fn` function by going to the deployed function URL with your browser or by using `curl`.

@@ -1,26 +1,26 @@
 # knfun
 
-Knfun is a set of Knative micro-services / micro-functions that are intended to be used for live demos in order to illustrate the end-to-end developer experience of using Knative and the `kn` CLI.
+Knfun is a set of Knative micro-services / micro-functions intended to be used for live demos. The main goal is to illustrate the end-to-end developer experience of using [Knative](https://knative.dev) and its `kn` CLI.
 
-The first demo uses three functions in a live demo setting. The following diagram is a sketch of this demo.
+The first demo uses three functions in a live demo setting (ideally with an audience participating). The following diagram is a sketch of this demo and these [slides](docs/demo1-slides.pdf) can be used for introduction.
 
 ![Demo sketch](docs/demo1-sketch.png)
 
 ## Functions
 
 1. *TwitterFn* search function (via [Twitter's API](https://developer.twitter.com/en/docs))
-	_in_: hashtags or string to search
-	_in_: count (max number of tweets)
-	_out_: recent tweets with images
+	* _in_: hashtags or string to search
+	* _in_: count (max number of tweets)
+	* _out_: recent tweets with images
 
 2. *WatsonFn* visual recognition image classifier function (via IBM's [Watson APIs](https://cloud.ibm.com/apidocs/visual-recognition/visual-recognition-v3))
-	_in_: image URL
-	_out_: image features (class) with confidence (score)
+	* _in_: image URL
+	* _out_: image features (class) with confidence (score)
 
 3. *SummaryFn* function
-	_in_: search string and twitterFn and WatsonFn URLs
-	_in_: count (max number of tweets)
-	_out_: HTML page displaying summary
+	* _in_: search string and twitterFn and WatsonFn URLs
+	* _in_: count (max number of tweets)
+	* _out_: HTML page displaying summary
 
 Of course, both the *TwitterFn* and *WatsonFn* require credentials to execute. This means that the keys for both the *TwitterFn* and *WatsonFn* are also required, however, to simplify the discussion, they are somtimes ommited in diagram and some other places.
 
@@ -326,4 +326,4 @@ Deploy the `summary-fn` service with:
 ...
 ```
 
-You can test the `summary-fn` function by going to the deployed function URL with your browser or by using `curl`.
+You can test the `summary-fn` function by going to the deployed function URL with your browser or by using `curl`. We welcome your feedback as [issues](https://github.com/maximilien/knfun/issues) and [pull requests](https://github.com/maximilien/knfun/pulls).

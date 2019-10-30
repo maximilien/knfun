@@ -223,7 +223,7 @@ You can simply do:
 
 # Deploy
 
-In order to deploy into a Knative cluster, you must first create images and publish them into a repository. We will be using Docker for that purpose. The `./hack/deploy.sh --docker-images` and `./hack/deploy.sh --docker-push` will respectively create Docker images and push them in your [Docker Hub](https://docker.io) account for you. You simply need to make sure the `docker` executable is visible to your shell and that the environment variable `DOCKER_USERNAME` is set to your Docker Hub user ID.
+In order to deploy into a Knative cluster, you must first create images and publish them into a repository. We will be using Docker for that purpose. The `./hack/build.sh --docker-images` and `./hack/build.sh --docker-push` will respectively create Docker images and push them in your [Docker Hub](https://docker.io) account for you. You simply need to make sure the `docker` executable is visible to your shell and that the environment variable `DOCKER_USERNAME` is set to your Docker Hub user ID.
 
 ```bash
 ./hack/build.sh --docker-images

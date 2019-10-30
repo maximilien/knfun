@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/maximilien/knfun/funcs/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -87,7 +88,7 @@ func (searchFn *SearchFn) search(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		fmt.Printf("%s\n", tweetsData.Flatten(searchFn.Output))
+		fmt.Printf("%s\n", common.Flatten(&tweetsData, searchFn.Output, tweetsData.ToText))
 	}
 
 	return nil

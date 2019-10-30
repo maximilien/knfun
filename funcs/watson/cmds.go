@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/maximilien/knfun/funcs/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -95,7 +96,7 @@ func (classifyImageFn *ClassifyImageFn) classify(cmd *cobra.Command, args []stri
 			return err
 		}
 
-		fmt.Printf("%s\n", classifyData.Flatten(classifyImageFn.Output))
+		fmt.Printf("%s\n", common.Flatten(&classifyData, classifyImageFn.Output, classifyData.ToText))
 	}
 
 	return nil

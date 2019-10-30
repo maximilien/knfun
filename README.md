@@ -22,7 +22,7 @@ The first demo uses three functions in a live demo setting (ideally with an audi
 	* _in_: count (max number of tweets)
 	* _out_: HTML page displaying summary
 
-Of course, both the *TwitterFn* and *WatsonFn* require credentials to execute. This means that the keys for both the *TwitterFn* and *WatsonFn* are also required, however, to simplify the discussion, they are somtimes ommited in diagram and some other places.
+Of course, both the *TwitterFn* and *WatsonFn* require credentials to execute. This means that the keys for both the *TwitterFn* and *WatsonFn* are also required as input, however, to simplify the discussion, they are somtimes ommited in diagram and some other places.
 
 Table of Contents
 =================
@@ -60,12 +60,12 @@ To facilitate using and passing these secrets in the commands, I recommend setti
 
 ### Twitter
 
-Once you have access to the Twitter API, you will have four different keys (as strings). They are:
+Once you have access to the [Twitter API](https://developer.twitter.com/en/docs), you will have four different keys (as strings). They are:
 
-1. Twitter API key - TWITTER_API_KEY
-2. Twitter API secret key - TWITTER_API_SECRET_KEY
+1. Twitter API Key - TWITTER_API_KEY
+2. Twitter API Secret Key - TWITTER_API_SECRET_KEY
 3. Twitter Access Token - TWITTER_ACCESS_TOKEN
-4. Twitter Access Token secret - TWITTER_ACCESS_TOKEN_SECRET
+4. Twitter Access Token Secret - TWITTER_ACCESS_TOKEN_SECRET
 
 To set these on your shell, do the following replacing the content in `<>` with your key value
 
@@ -80,7 +80,7 @@ export TWITTER_ACCESS_TOKEN_SECRET=<your Twitter access token secret value here>
 
 Access to the IBM Watson API requires one secret and two constant values. They are:
 
-1. Watson API key - WATSON_API_KEY
+1. Watson API Key - WATSON_API_KEY
 2. Watson API URL - WATSON_API_URL
 3. Watson APU Version - WATSON_API_VERSION
 
@@ -150,7 +150,7 @@ To see what other options are available for the `twitter-fn` `search` function g
 Similarly for the `watson-fn` function you can test it locally with any image for which you have a public URL with the following.
 
 ```bash
-./watson-fn vr classify http://pbs.twimg.com/media/EHpWVAvWoAEfVzO.jpg -o text \
+./watson-fn vr classify https://upload.wikimedia.org/wikipedia/commons/c/c3/Jordan_by_Lipofsky_16577.jpg -o text \
 			   --watson-api-key $WATSON_API_KEY \
 			   --watson-api-url $WATSON_API_URL \
 			   --watson-api-version $WATSON_API_VERSION \
@@ -159,7 +159,7 @@ Similarly for the `watson-fn` function you can test it locally with any image fo
 To run this as a server and see JSON output on your browser or with curl, do the following:
 
 ```bash
-./watson-fn vr classify http://pbs.twimg.com/media/EHpWVAvWoAEfVzO.jpg -o json -p 8081 \
+./watson-fn vr classify https://upload.wikimedia.org/wikipedia/commons/c/c3/Jordan_by_Lipofsky_16577.jpg -o json -p 8081 \
 			   --watson-api-key $WATSON_API_KEY \
 			   --watson-api-url $WATSON_API_URL \
 			   --watson-api-version $WATSON_API_VERSION \
@@ -260,7 +260,7 @@ Your images should not be avaible at:
 
 1. `docker.io/${DOCKER_USERNAME}/twitter-fn`
 2. `docker.io/${DOCKER_USERNAME}/watson-fn`
-3. `docker.io/${DOCKER_USERNAME}/summaryr-fn`
+3. `docker.io/${DOCKER_USERNAME}/summary-fn`
 
 You can use these images to deploy them into your Knative cluster with the `kn` CLI.
 

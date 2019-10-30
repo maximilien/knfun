@@ -74,7 +74,10 @@ func (summaryFn *SummaryFn) Summary() ([]ClassifiedTweet, error) {
 }
 
 func (summaryFn *SummaryFn) SummaryHandler(writer http.ResponseWriter, request *http.Request) {
-	classifiedTweets, err := summaryFn.collectClassifiedTweets()
+	summaryFn.InitCommonQueryParams(request)
+	log.Printf("SummaryFn.Summary: s=\"%s\", c=\"%d\", o=\"%s\"", summaryFn.SearchString, summaryFn.Count, summaryFn.Output)
+
+	classifiedTweets, err := summaryFn.Summary()
 	if err != nil {
 		log.Printf("Error collecting classified tweets: %s\n", err.Error())
 		return

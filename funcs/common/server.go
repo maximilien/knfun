@@ -21,6 +21,12 @@ import (
 	"strconv"
 )
 
+func (commonFn *CommonFn) InitCommonQueryParams(request *http.Request) {
+	commonFn.SearchString = commonFn.ExtractQueryStringParam(request, []string{"q", "query", "search-string", "s"}, commonFn.SearchString)
+	commonFn.Count = commonFn.ExtractQueryIntParam(request, []string{"c", "count"}, commonFn.Count)
+	commonFn.Output = commonFn.ExtractQueryStringParam(request, []string{"o", "output"}, commonFn.Output)
+}
+
 func (commonFn *CommonFn) ExtractQueryStringParams(request *http.Request, paramNames []string) map[string]string {
 	query := request.URL.Query()
 	valueMap := map[string]string{}

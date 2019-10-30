@@ -16,14 +16,12 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/maximilien/knfun/funcs/common"
-
-	"gopkg.in/yaml.v2"
 
 	"github.com/IBM/go-sdk-core/core"
 	vr3 "github.com/watson-developer-cloud/go-sdk/visualrecognitionv3"
@@ -60,43 +58,32 @@ func (classifyImageFn *ClassifyImageFn) ClassifyImage() (ClassifyImageData, erro
 		},
 	)
 	if err != nil {
-		log.Fatal("Error classifying image: %s\n", err.Error())
-		return ClassifyImageData{}, err
+		return ClassifyImageData{}, errors.New(fmt.Sprintf("Error classifying image: %s\n", err.Error()))
 	}
 
 	return classifyImageFn.collectClassifyImageData(classifiedImages), nil
 }
 
 func (classifyImageFn *ClassifyImageFn) ClassifyHandler(writer http.ResponseWriter, request *http.Request) {
-	imageURL := classifyImageFn.ExtractQueryStringParam(request, []string{"query", "q", "image-url", "u"}, classifyImageFn.ImageURL)
-	output := classifyImageFn.ExtractQueryStringParam(request, []string{"o", "output"}, classifyImageFn.Output)
+	classifyImageFn.initQueryParams(request)
+	log.Printf("WatsonFn.Classify: q=\"%s\", o=\"%s\"", classifyImageFn.ImageURL, classifyImageFn.Output)
 
-	if imageURL == "" {
-		log.Printf("Must pass an image URL string using 'q' or 'query' parameter")
-		return
-	}
-
-	vr, err := classifyImageFn.createWatsonClient()
+	classifiedImageData, err := classifyImageFn.ClassifyImage()
 	if err != nil {
-		log.Printf("Error creating visual recognition client: %s\n", err.Error())
+		log.Printf(err.Error())
 		return
 	}
 
-	classifiedImages, _, err := vr.Classify(
-		&vr3.ClassifyOptions{
-			URL: core.StringPtr(imageURL),
-		},
-	)
-	if err != nil {
-		log.Printf("Error classifying image: %s\n", err.Error())
-		return
-	}
-
-	writer.Header().Add("Content-Type", classifyImageFn.OutputContentType(output))
-	fmt.Fprintf(writer, "%s\n", classifyImageFn.collectClassifyImageData(classifiedImages).Flatten(output))
+	writer.Header().Add("Content-Type", classifyImageFn.OutputContentType(classifyImageFn.Output))
+	fmt.Fprintf(writer, "%s\n", common.Flatten(&classifiedImageData, classifyImageFn.Output, classifiedImageData.ToText))
 }
 
 // Private classifyImageFn
+
+func (classifyImageFn *ClassifyImageFn) initQueryParams(request *http.Request) {
+	classifyImageFn.ImageURL = classifyImageFn.ExtractQueryStringParam(request, []string{"query", "q", "image-url", "u"}, classifyImageFn.ImageURL)
+	classifyImageFn.Output = classifyImageFn.ExtractQueryStringParam(request, []string{"o", "output"}, classifyImageFn.Output)
+}
 
 func (classifyImageFn *ClassifyImageFn) createWatsonClient() (*vr3.VisualRecognitionV3, error) {
 	return vr3.NewVisualRecognitionV3(&vr3.VisualRecognitionV3Options{
@@ -120,7 +107,7 @@ func (classifyImageFn *ClassifyImageFn) collectClassifyImageData(classifiedImage
 
 // Private ClassifyImageData
 
-func (cIData ClassifyImageData) ToText() string {
+func (cIData ClassifyImageData) ToText(in interface{}) string {
 	sb := bytes.NewBufferString("")
 
 	sb.WriteString(fmt.Sprintf("source URL: %s\n", *cIData.ClassifiedImage.SourceURL))
@@ -145,37 +132,4 @@ func (cIData ClassifyImageData) ToText() string {
 	}
 
 	return sb.String()
-}
-
-func (cIData ClassifyImageData) ToYAML() string {
-	data, err := yaml.Marshal(&cIData)
-	if err != nil {
-		panic("Error YAML marshalling ClassifyImageData")
-	}
-
-	return string(data)
-}
-
-func (cIData ClassifyImageData) ToJSON() string {
-	data, err := json.MarshalIndent(&cIData, "", "  ")
-	if err != nil {
-		panic("Error JSON marshalling ClassifyImageData")
-	}
-
-	return string(data)
-}
-
-func (cIData ClassifyImageData) Flatten(output string) string {
-	outputData := ""
-	switch output {
-	case "yaml":
-		outputData = cIData.ToYAML()
-		break
-	case "json":
-		outputData = cIData.ToJSON()
-		break
-	default:
-		outputData = cIData.ToText()
-	}
-	return outputData
 }

@@ -16,14 +16,11 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/maximilien/knfun/funcs/common"
-
-	"gopkg.in/yaml.v2"
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
@@ -63,29 +60,17 @@ func (searchFn *SearchFn) Search() (TweetsData, error) {
 }
 
 func (searchFn *SearchFn) SearchHandler(writer http.ResponseWriter, request *http.Request) {
-	searchString := searchFn.ExtractQueryStringParam(request, []string{"q", "query", "search-string", "s"}, searchFn.SearchString)
-	output := searchFn.ExtractQueryStringParam(request, []string{"o", "output"}, searchFn.Output)
-	count := searchFn.ExtractQueryIntParam(request, []string{"c", "count"}, searchFn.Count)
+	searchFn.InitCommonQueryParams(request)
+	log.Printf("TwitterFn.Search: q=\"%s\", c=\"%d\", o=\"%s\"", searchFn.SearchString, searchFn.Count, searchFn.Output)
 
-	if searchString == "" {
-		log.Printf("Must pass a query string using 'q' or 'query' parameter")
-		return
-	}
-
-	client := searchFn.createTwitterClient()
-	results, _, err := client.Search.Tweets(&twitter.SearchTweetParams{
-		Query: searchString,
-		Count: count,
-	})
-
+	tweetsData, err := searchFn.Search()
 	if err != nil {
-		log.Printf("Error searching for tweets: %s\n", err.Error())
+		log.Printf(err.Error())
 		return
 	}
 
-	tweetsData := searchFn.collectTweetsData(results.Statuses)
-	writer.Header().Add("Content-Type", searchFn.OutputContentType(output))
-	fmt.Fprintf(writer, "%s\n", tweetsData.Flatten(output))
+	writer.Header().Add("Content-Type", searchFn.OutputContentType(searchFn.Output))
+	fmt.Fprintf(writer, "%s\n", common.Flatten(&tweetsData, searchFn.Output, tweetsData.ToText))
 }
 
 // Private SearchFn
@@ -115,49 +100,22 @@ func (searchFn *SearchFn) collectTweetsData(tweets []twitter.Tweet) TweetsData {
 
 // Private TweetsData
 
-func (tweets TweetsData) ToText() string {
+func (tweet TweetData) ToText(in interface{}) string {
 	sb := bytes.NewBufferString("")
-	for _, tweetData := range tweets {
-		sb.WriteString(fmt.Sprintf("\n🐦 %s\n", tweetData.Text))
-		if len(tweetData.ImageURLs) > 0 {
-			for _, imageUrl := range tweetData.ImageURLs {
-				sb.WriteString(fmt.Sprintf("- 📸 %s\n", imageUrl))
-			}
+	sb.WriteString(fmt.Sprintf("\n🐦 %s\n", tweet.Text))
+	if len(tweet.ImageURLs) > 0 {
+		for _, imageUrl := range tweet.ImageURLs {
+			sb.WriteString(fmt.Sprintf("- 📸 %s\n", imageUrl))
 		}
-		sb.WriteString("------\n")
 	}
 	return sb.String()
 }
 
-func (tweets TweetsData) ToYAML() string {
-	data, err := yaml.Marshal(&tweets)
-	if err != nil {
-		panic("Error YAML marshalling TweetData")
+func (tweets TweetsData) ToText(in interface{}) string {
+	sb := bytes.NewBufferString("")
+	for _, tweetData := range tweets {
+		sb.WriteString(tweetData.ToText(tweetData))
+		sb.WriteString("------\n")
 	}
-
-	return string(data)
-}
-
-func (tweets TweetsData) ToJSON() string {
-	data, err := json.MarshalIndent(&tweets, "", "  ")
-	if err != nil {
-		panic("Error JSON marshalling TweetData")
-	}
-
-	return string(data)
-}
-
-func (tweets TweetsData) Flatten(output string) string {
-	outputData := ""
-	switch output {
-	case "yaml":
-		outputData = tweets.ToYAML()
-		break
-	case "json":
-		outputData = tweets.ToJSON()
-		break
-	default:
-		outputData = tweets.ToText()
-	}
-	return outputData
+	return sb.String()
 }

@@ -22,41 +22,41 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-type Data struct{}
+type ToTextFunc = func(in interface{}) string
 
-func (data Data) ToText() string {
-	sb := bytes.NewBufferString("")
-	sb.WriteString(fmt.Sprintf("%#v\n", data))
-	return sb.String()
-}
-
-func (data Data) ToYAML() string {
-	yData, err := yaml.Marshal(&data)
+func ToYAML(in interface{}) string {
+	yData, err := yaml.Marshal(in)
 	if err != nil {
 		panic("Error YAML marshalling Data")
 	}
 	return string(yData)
 }
 
-func (data Data) ToJSON() string {
-	jData, err := json.MarshalIndent(&data, "", "  ")
+func ToJSON(in interface{}) string {
+	jData, err := json.MarshalIndent(in, "", "  ")
 	if err != nil {
 		panic("Error JSON marshalling Data")
 	}
 	return string(jData)
 }
 
-func (data Data) Flatten(output string) string {
+func ToText(in interface{}) string {
+	sb := bytes.NewBufferString("")
+	sb.WriteString(fmt.Sprintf("%#v\n", in))
+	return sb.String()
+}
+
+func Flatten(in interface{}, output string, toText ToTextFunc) string {
 	outputData := ""
 	switch output {
 	case "yaml":
-		outputData = data.ToYAML()
+		outputData = ToYAML(in)
 		break
 	case "json":
-		outputData = data.ToJSON()
+		outputData = ToJSON(in)
 		break
 	default:
-		outputData = data.ToText()
+		outputData = toText(in)
 	}
 	return outputData
 }

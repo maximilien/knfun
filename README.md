@@ -38,6 +38,7 @@ Table of Contents
 	* [watson-fn](#watson-fn)
 	* [summary-fn](#summary-fn)
 	* [Credentials Config](#credentials-config)
+	* [e2e](#e2e)
   * [Deploy](#deploy)
   * [Run](#run)
 
@@ -117,7 +118,7 @@ These are designed as both CLIs and server functions that you can test locally a
 
 # Test
 
-Let's first explore how to test the functions locally.
+Let's first explore how to test the functions locally. Later we will show how you can run [e2e](#e2e) tests automatically for quick sanity checks.
 
 ## twitter-fn
 
@@ -219,6 +220,37 @@ You can simply do:
 
 ```bash
 ./watson-fn vr classify http://pbs.twimg.com/media/EHpWVAvWoAEfVzO.jpg -o json
+```
+
+## e2e
+
+You can easily run end-to-end (e2e) tests once you have configured your credentials in a `~/.knfun.yaml` by invoking the `./test/e2e-tests-local.sh`. 
+
+```bash
+./test/e2e-tests-local.sh
+📋 Formatting
+🧪  Testing
+=== RUN   TestSmoke
+=== PAUSE TestSmoke
+=== CONT  TestSmoke
+=== RUN   TestSmoke/verifies_twitter-fn_search
+Running 'twitter-fn search NBA -c 10 -o json'...
+=== RUN   TestSmoke/verifies_watson-fn_vr_classify
+Running 'watson-fn vr classify http://pbs.twimg.com/media/EHb34-KXYAESI46.jpg -o json'...
+--- PASS: TestSmoke (3.88s)
+    --- PASS: TestSmoke/verifies_twitter-fn_search (0.53s)
+    --- PASS: TestSmoke/verifies_watson-fn_vr_classify (3.35s)
+...
+PASS
+ok  	github.com/maximilien/knfun/test/e2e	4.052s
+```
+
+To run a quick "smoke" test that verifies each function then run the `./hack/build.sh --test`. It will display any errors and place output content in a file named `/tmp/knfun-test-output.XXXXXX`.
+
+```bash
+./hack/build.sh --test
+🧪  Tests
+  🧪 e2e
 ```
 
 # Deploy

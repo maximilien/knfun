@@ -12,4 +12,6 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/watson-developer-cloud/go-sdk v1.0.0
 	gopkg.in/yaml.v2 v2.2.4
+	gotest.tools v2.2.0+incompatible
+	knative.dev/client v0.9.0
 )

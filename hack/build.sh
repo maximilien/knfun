@@ -18,6 +18,7 @@ set -o pipefail
 
 source_dirs="funcs"
 docker_username=${DOCKER_USERNAME:-}
+knfun_config=$HOME/.knfun.yaml
 
 # Store for later
 if [ -z "$1" ]; then
@@ -104,12 +105,10 @@ run() {
   # Default flow
   codegen
   go_build
-  go_test
 
   echo "────────────────────────────────────────────"
   echo "success"
 }
-
 
 codegen() {
   # Update dependencies
@@ -182,27 +181,36 @@ go_build() {
 }
 
 go_test() {
-  local test_output=$(mktemp /tmp/kn-client-test-output.XXXXXX)
+  export PATH=$PWD:$PATH
+  local basedir=$(basedir)
+  if [ ! -f $knfun_config ]; then
+    echo "Please create a ~/.knfun.yaml file with all funcs credentials"
+    echo "  see: https://github.com/maximilien/knfun#credentials"
+    exit 1
+  fi
 
-  # local red=""
-  # local reset=""
-  # # Use color only when a terminal is set
-  # if [ -t 1 ]; then
-  #   red="[31m"
-  #   reset="[39m"
-  # fi
+  local test_output=$(mktemp /tmp/knfun-test-output.XXXXXX)
 
-  # echo "🧪 ${S}Test"
-  # set +e
-  # go test -v ./pkg/... >$test_output 2>&1
-  # local err=$?
-  # if [ $err -ne 0 ]; then
-  #   echo "🔥 ${red}Failure${reset}"
-  #   cat $test_output | sed -e "s/^.*\(FAIL.*\)$/$red\1$reset/"
-  #   rm $test_output
-  #   exit $err
-  # fi
-  # rm $test_output
+  local red=""
+  local reset=""
+  # Use color only when a terminal is set
+  if [ -t 1 ]; then
+    red="[31m"
+    reset="[39m"
+  fi
+
+  echo "🧪 ${S}Tests"
+  set +e
+  echo "  🧪 e2e"  
+  go test ${basedir}/test/e2e/ -run TestSmoke -test.v --tags 'e2e' "$@" >$test_output 2>&1
+  local err=$?
+  if [ $err -ne 0 ]; then
+    echo "🔥 ${red}Failure${reset}"
+    cat $test_output | sed -e "s/^.*\(FAIL.*\)$/$red\1$reset/"
+    rm $test_output
+    exit $err
+  fi
+  rm $test_output
 }
 
 check_license() {

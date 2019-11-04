@@ -1,24 +1,62 @@
-<h1>{{.PageTitle}}</h1>
-<div>
-    {{range .Tweets}}
+<head>
+    <h1>{{.PageTitle}}</h1>
+    <meta charset="utf-8">
+    
+<link rel="stylesheet" href="http://mistic100.github.io/jQCloud/dist/jqcloud2/dist/jqcloud.min.css">  
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>   
+    <script src="http://mistic100.github.io/jQCloud/dist/jqcloud2/dist/jqcloud.min.js"></script>
+
+    <style>
+    #cloud {
+      width: 700px;
+      height: 300px;
+    }
+    </style>
+</head>
+<body>
+    <div id="cloud"></div>
+    <script type="text/javascript">
+        var words = [];
+    </script>
     <div>
-        {{range .ClassifiedImages}}
-        	<div>
-        		<img src="{{.ResolvedURL}}">
-        	</div>
-	        <div>
-	        	{{range .Classifiers}}
-	        	<div>
-		        	{{range .Classes}}
-		        		<div>{{.Name}} ({{.Score}})
-		        	{{end}}
-		        </div>
-	        	{{end}}
-	        </div>
+        {{range $i, $tweet := .Tweets}}
+        <div>
+            {{range $j, $ClassifiedImage := $tweet.ClassifiedImages}}
+            	<div id="#{{$i}}_{{$j}}">
+            		<img src="{{$ClassifiedImage.ResolvedURL}}">
+            	</div>
+    	        <div>
+    	        	{{range $ClassifiedImage.Classifiers}}
+    	        	<div>
+    		        	{{range .Classes}}
+    		        		<div>{{.Name}} ({{.Score}})
+                            <script type="text/javascript">
+                                words.push({text:{{.Name}}, 
+                                            weight:{{.Score}}*1000, 
+                                            link: "#{{$i}}_{{$j}}"})
+                            </script>
+                            </div> 
+    		        	{{end}}
+    		        </div>
+    	        	{{end}}
+    	        </div>
+            {{end}}
+            <div>{{.Text}}</div>
+            <br/>
+            <hr/>
+        </div>
         {{end}}
-        <div>{{.Text}}</div>
-        <br/>
-        <hr/>
     </div>
-    {{end}}
-</div>
+    <script type="text/javascript">
+        $('#cloud').jQCloud(words);
+        $(document).ready(function() {
+          $('.content-link').click(function(e) {
+            e.preventDefault();
+
+            $('html, body').animate({
+              scrollTop: $('#profile-body').offset().top
+            }, 500);
+          });
+        });    
+    </script>
+</body>

@@ -12,6 +12,17 @@
       height: 300px;
     }
     </style>
+<script type="text/javascript">
+$(document).ready(function() {
+  $('.content-link').click(function(e) {
+    e.preventDefault();
+
+    $('html, body').animate({
+      scrollTop: $('#profile-body').offset().top
+    }, 500);
+  });
+});    
+</script>
 </head>
 <body>
     <div id="cloud"></div>
@@ -31,9 +42,9 @@
     		        	{{range .Classes}}
     		        		<div>{{.Name}} ({{.Score}})
                             <script type="text/javascript">
-                                words.push({text:{{.Name}}, 
+                                words.push({text:"{{.Name}}", 
                                             weight:{{.Score}}*1000, 
-                                            link: "#{{$i}}_{{$j}}"})
+                                            link:"#{{$i}}_{{$j}}"})
                             </script>
                             </div> 
     		        	{{end}}
@@ -49,14 +60,5 @@
     </div>
     <script type="text/javascript">
         $('#cloud').jQCloud(words);
-        $(document).ready(function() {
-          $('.content-link').click(function(e) {
-            e.preventDefault();
-
-            $('html, body').animate({
-              scrollTop: $('#profile-body').offset().top
-            }, 500);
-          });
-        });    
     </script>
 </body>

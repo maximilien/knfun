@@ -376,8 +376,8 @@ Additionally, there are three immediate next steps I would like to see for v2 of
 
 1. Improve the UI output for the `SummaryFn`. In particular making it more dynamic and usable for live demos.
 2. Show more `kn` features like revisions and scaling and how to traffic split between different revisions, e.g., deploy updates to `TwitterFn` and have `SummaryFn` access different revisions.
-3. Use Knative's eventing to refresh the `SummaryFn` page when new tweets are available. This assumes a Twitter Knative importer and broker is available.
+3. Use Knative's eventing to refresh the `SummaryFn` page automatically when new tweets are available. This assumes a Twitter API Knative importer and broker is available.
 
 # Participate
 
-We welcome your feedback as [issues](https://github.com/maximilien/knfun/issues) and [pull requests](https://github.com/maximilien/knfun/pulls). Feel free to reuse this in your own demos. [Contact me](mailto:maxim@us.ibm.com?subject=[KnFun]demo%20links) if you do so I can list recording and presentations.
+We welcome your feedback as [issues](https://github.com/maximilien/knfun/issues) and [pull requests](https://github.com/maximilien/knfun/pulls). Feel free to reuse this in your own demos. [Contact me](mailto:maxim@us.ibm.com?subject=[KnFun]demo%20links) if you do so I can list and recordings and presentations.

@@ -22,7 +22,7 @@ The first demo uses three functions in a live demo setting (ideally with an audi
 	* _in_: count (max number of tweets)
 	* _out_: HTML page displaying summary
 
-Of course, both the *TwitterFn* and *WatsonFn* require credentials to execute. This means that the keys for both the *TwitterFn* and *WatsonFn* are also required as input, however, to simplify the discussion, they are somtimes ommited in diagram and some other places.
+Both the *TwitterFn* and *WatsonFn* require credentials to execute. This means that the keys for both the *TwitterFn* and *WatsonFn* are also required as input, however, to simplify the discussion, they are sometimes ommited in diagrams and some other places.
 
 Table of Contents
 =================
@@ -34,22 +34,25 @@ Table of Contents
 		* [Watson](#watson)
   * [Build](#build)
   * [Test](#test)
-  	* [twitter-fn](#twitter-fn)
+   	* [twitter-fn](#twitter-fn)
 	* [watson-fn](#watson-fn)
 	* [summary-fn](#summary-fn)
 	* [Credentials Config](#credentials-config)
 	* [e2e](#e2e)
   * [Deploy](#deploy)
   * [Run](#run)
+   	* [TwitterFn](#TwitterFn)
+	* [WatsonFn](#WatsonFn)
+	* [SummaryFn](#SummaryFn)
 
 # Setup
 
-This repository is self-contained except for the following dependencies which you should have met before getting started.
+This repository is self-contained, except for the following dependencies which you should resolve before getting started:
 
 1. Go version go1.12.x or later. Go to [Golang download](https://golang.org/dl/) page to get the version for your OS.
 2. [Docker engine](https://docs.docker.com/engine/installation/) for your machine. Specifically ensure you can execute the `docker` executable at the command line.
 3. [Knative](https://knative.dev/) cluster. Depending on your Kubernetes cluster provider you can find different means for [getting Knative installed](https://knative.dev/docs/install/) onto your cluster.
-4. [Knative's `kn` client](https://github.com/knative/client). Once you have your Knative cluster, follow the steps to build `kn` or get one from the released builds.
+4. [Knative's `kn` client](https://github.com/knative/client). Once you have your Knative cluster, follow the steps to build `kn` or get one from the latest [released builds](https://github.com/knative/client/releases).
 
 Once these four dependencies are met, continue below with steps to get and set your APIs credentials, build, test, and deploy the functions for the demos.
 
@@ -57,7 +60,7 @@ Once these four dependencies are met, continue below with steps to get and set y
 
 As mentioned above, you need to get credentials for both the [Twitter API](https://developer.twitter.com/en/docs) and the [IBM Watson API](https://cloud.ibm.com/apidocs/visual-recognition/visual-recognition-v3). Once you do, then you should be able to follow the steps below. 
 
-To facilitate using and passing these secrets in the commands, I recommend setting environment variables for each string in your shell. Feel free to use other means but in the description below I am assuming that the secret values are set to the environment variables correspondingly named.
+To facilitate using and passing these secrets at the command line, I recommend setting environment variables for each string in your shell. Feel free to use other means, but in the description below I am assuming that the secret values are set to the environment variables correspondingly named.
 
 ### Twitter
 
@@ -68,25 +71,25 @@ Once you have access to the [Twitter API](https://developer.twitter.com/en/docs)
 3. Twitter Access Token - TWITTER_ACCESS_TOKEN
 4. Twitter Access Token Secret - TWITTER_ACCESS_TOKEN_SECRET
 
-To set these on your shell, do the following replacing the content in `<>` with your key value
+To set these on your shell, do the following replacing the content in `"..."` with your key value
 
 ```bash
-export TWITTER_API_KEY=<your Twitter API key value here>
-export TWITTER_API_SECRET_KEY=<your Twitter API secret key value here>
-export TWITTER_ACCESS_TOKEN=<your Twitter access token value here>
-export TWITTER_ACCESS_TOKEN_SECRET=<your Twitter access token secret value here>
+export TWITTER_API_KEY="your Twitter API key value here"
+export TWITTER_API_SECRET_KEY="your Twitter API secret key value here"
+export TWITTER_ACCESS_TOKEN="your Twitter access token value here"
+export TWITTER_ACCESS_TOKEN_SECRET="your Twitter access token secret value here"
 ```
 
 ### Watson
 
-Access to the IBM Watson API requires one secret and two constant values. They are:
+Access to the [IBM Watson API](https://cloud.ibm.com/apidocs/visual-recognition/visual-recognition-v3) requires one secret and two constant values. They are:
 
 1. Watson API Key - WATSON_API_KEY
 2. Watson API URL - WATSON_API_URL
 3. Watson APU Version - WATSON_API_VERSION
 
 ```bash
-export WATSON_API_KEY=<your Watson API key value here>
+export WATSON_API_KEY="your Watson API key value here"
 export WATSON_API_URL=https://gateway.watsonplatform.net/visual-recognition/api
 export WATSON_API_VERSION=2018-03-19
 ```
@@ -114,15 +117,15 @@ LICENSE    docs       go.mod     hack       twitter-fn watson-fn
 README.md  funcs      go.sum     summary-fn vendor
 ```
 
-These are designed as both CLIs and server functions that you can test locally and deploy on Knative.
+These are designed as both CLIs and server functions that you can test locally and deploy and run on Knative.
 
 # Test
 
-Let's first explore how to test the functions locally. Later we will show how you can run [e2e](#e2e) tests automatically for quick sanity checks.
+Let's first explore how to test the functions locally. Later we will show how you can run [e2e](#e2e) tests automatically for a quick sanity check.
 
 ## twitter-fn
 
-For each function you can run them locally as a CLI to get immediate response. You can also run them as a local server and use your browser to see the responses changing input. For example, the following will display recent tweets that have the word `NBA`
+For each function you can run them locally as a CLI to get immediate response. You can also run them as a local server and use your browser to see the responses and changing input. For example, the following will display recent tweets that have the word `NBA`
 
 ```bash
 ./twitter-fn search NBA -c 20 -o text \
@@ -166,7 +169,7 @@ To run this as a server and see JSON output on your browser or with curl, do the
 			   --watson-api-version $WATSON_API_VERSION \
 ```
 
-You can change the input at the browser by passing the URL with the `q` or `query` URL paramter. For example: `http://localhjost:8081?http://pbs.twimg.com/media/EHpWVAvWoAEfVzO.jpg&o=json`. If you can the `o` to `text` then the image classification will display as text.
+You can change the input at the browser by passing the URL with the `q` or `query` URL paramter. For example: `http://localhjost:8081?http://pbs.twimg.com/media/EHpWVAvWoAEfVzO.jpg&o=json`. If you change the `-o` value to `text` then the image classification will display as formatted text.
 
 ## summary-fn
 
@@ -190,7 +193,7 @@ Open your browser at `http://localhost:8082` or `curl http://localhost:8082`
 
 ## Credentials config
 
-You can avoid passing all the credentials everytime by creating a file named `.knfun.yaml` in your home directory and adding the credential values in it. The following command will create that file and set the values from the environment variables we discussed above.
+You can avoid passing all the credentials everytime by creating a file named `.knfun.yaml` in your home directory and adding the credential values in it. The following command will create that file and set the values from the environment variables we discussed [above](#credentials).
 
 ```bash
 touch ~/.knfun.yaml
@@ -255,7 +258,11 @@ To run a quick "smoke" test that verifies each function then run the `./hack/bui
 
 # Deploy
 
-In order to deploy into a Knative cluster, you must first create images and publish them into a repository. We will be using Docker for that purpose. The `./hack/build.sh --docker-images` and `./hack/build.sh --docker-push` will respectively create Docker images and push them in your [Docker Hub](https://docker.io) account for you. You simply need to make sure the `docker` executable is visible to your shell and that the environment variable `DOCKER_USERNAME` is set to your Docker Hub user ID.
+In order to deploy into a Knative cluster, you must first create images and publish them into a repository. We will be using Docker for that purpose. 
+
+The `./hack/build.sh --docker-images` and `./hack/build.sh --docker-push` will respectively create Docker images and push them in your [Docker Hub](https://docker.io) account for you. 
+
+You simply need to make sure the `docker` executable is visible to your shell and that the environment variable `DOCKER_USERNAME` is set to your Docker Hub user ID.
 
 ```bash
 ./hack/build.sh --docker-images
@@ -294,13 +301,13 @@ Your images should not be avaible at:
 2. `docker.io/${DOCKER_USERNAME}/watson-fn`
 3. `docker.io/${DOCKER_USERNAME}/summary-fn`
 
-You can use these images to deploy them into your Knative cluster with the `kn` CLI.
+You can use these images to deploy the functions into your Knative cluster with the `kn` CLI.
 
 # Run
 
 Deploying into Knative means you have a Knative cluster ready and your `$KUBECONFIG` is set or that the `~/.kube/config` file is pointing to the cluster's Kubernetes configuration file.
 
-## Twitter
+## TwitterFn
 
 ```bash
 ./kn service create twitter-fn \
@@ -321,7 +328,7 @@ Service 'twitter-fn' created with latest revision 'twitter-fn-njnks-1' and URL:
 http://twitter-fn.knative-cluster.us-south.containers.cloud.ibm.com
 ```
 
-## Watson
+## WatsonFn
 
 ```bash
 ./kn service create watson-fn \
@@ -340,7 +347,7 @@ Service 'watson-fn' created with latest revision 'watson-fn-dnfxc-1' and URL:
 http://watson-fn.default.knative-cluster.us-south.containers.cloud.ibm.com
 ```
 
-## Summary
+## SummaryFn
 
 You need to then set the environment variables `TWITTER_FN_URL` and `WATSON_FN_URL` to the URLs that `kn service create ...` showed for the respective function. For instance:
 
@@ -358,4 +365,19 @@ Deploy the `summary-fn` service with:
 ...
 ```
 
-You can test the `summary-fn` function by going to the deployed function URL with your browser or by using `curl`. We welcome your feedback as [issues](https://github.com/maximilien/knfun/issues) and [pull requests](https://github.com/maximilien/knfun/pulls).
+You can test the `summary-fn` function by going to the deployed function URL with your browser or by using `curl`. 
+
+
+# Next steps
+
+This initial demo will be presented at the IBM mini-theater at KubeCon San Diego on Thursday November 21st, 2019. Please stop by the IBM booth mini theater to see the exact time and to attend and chat afterwards.
+
+Additionally, there are three immediate next steps I would like to see for v2 of this demo:
+
+1. Improve the UI output for the `SummaryFn`. In particular making it more dynamic and usable for live demos.
+2. Show more `kn` features like revisions and scaling and how to traffic split between different revisions, e.g., deploy updates to `TwitterFn` and have `SummaryFn` access different revisions.
+3. Use Knative's eventing to refresh the `SummaryFn` page when new tweets are available. This assumes a Twitter Knative importer and broker is available.
+
+# Participate
+
+We welcome your feedback as [issues](https://github.com/maximilien/knfun/issues) and [pull requests](https://github.com/maximilien/knfun/pulls). Feel free to reuse this in your own demos. [Contact me](mailto:maxim@us.ibm.com?subject=[KnFun]demo%20links) if you do so I can list recording and presentations.

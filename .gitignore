@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+*.log
 main
 twitter-fn
 watson-fn

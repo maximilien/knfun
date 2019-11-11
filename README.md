@@ -380,4 +380,4 @@ Additionally, there are three immediate next steps I would like to see for v2 of
 
 # Participate
 
-We welcome your feedback as [issues](https://github.com/maximilien/knfun/issues) and [pull requests](https://github.com/maximilien/knfun/pulls). Feel free to reuse this in your own demos. [Contact me](mailto:maxim@us.ibm.com?subject=[KnFun]demo%20links) if you do so I can list and recordings and presentations.
+We welcome your feedback as [issues](https://github.com/maximilien/knfun/issues) and [pull requests](https://github.com/maximilien/knfun/pulls). Feel free to reuse this in your own demos. [Contact me](mailto:maxim@us.ibm.com?subject=[KnFun]demo%20links) if you do so I can list recordings and presentations.

@@ -82,6 +82,17 @@ run() {
     exit 0
   fi
 
+  # Run docker-images and docker-push
+  if $(has_flag --docker); then
+    if [[ -z "${docker_username}" ]]; then
+      echo "Please set environment variable DOCKER_USERNAME"
+      exit 1
+    fi
+    docker_build_images
+    docker_push_images
+    exit 0
+  fi
+
   # Run only docker-images
   if $(has_flag --docker-images -d); then
     if [[ -z "${docker_username}" ]]; then

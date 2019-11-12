@@ -28,7 +28,6 @@ RUN apk add --no-cache ca-certificates
 COPY --from=builder /app/summary-fn /summary-fn
 
 # Run the web service on container startup.
-CMD ["/summary-fn", "NBA", "-o", "text", "-c", "10", "-p", "8080", "-S", \
-	                "--twitter-fn-url", "$TWITTER_FN_URL", \
-	                "--watson-fn-url", "$WATSON_FN_URL" \
-]
+CMD /summary-fn NBA -o text -c 10 -p 8080 -S \
+	                --twitter-fn-url $TWITTER_FN_URL \
+	                --watson-fn-url $WATSON_FN_URL

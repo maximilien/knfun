@@ -105,7 +105,7 @@ func (classifyImageFn *ClassifyImageFn) classify(cmd *cobra.Command, args []stri
 func (classifyImageFn *ClassifyImageFn) addWatsonCmdFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVar(&classifyImageFn.keys.watsonAPIKey, "watson-api-key", "", "watson API key")
 	cmd.PersistentFlags().StringVar(&classifyImageFn.keys.watsonAPIURL, "watson-api-url", "", "watson API URL")
-	cmd.PersistentFlags().StringVar(&classifyImageFn.keys.watsonAPIURL, "watson-api-version", "", "watson API version")
+	cmd.PersistentFlags().StringVar(&classifyImageFn.keys.watsonAPIVersion, "watson-api-version", "", "watson API version")
 
 	viper.BindPFlag("watson-api-key", cmd.PersistentFlags().Lookup("watson-api-key"))
 	viper.BindPFlag("watson-api-url", cmd.PersistentFlags().Lookup("watson-api-url"))

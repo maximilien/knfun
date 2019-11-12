@@ -28,9 +28,8 @@ RUN apk add --no-cache ca-certificates
 COPY --from=builder /app/twitter-fn /twitter-fn
 
 # Run the web service on container startup.
-CMD ["/twitter-fn", "search", "NBA", "-o", "json", "-c", "10", "-p", "8080", "-S", \
-	                "--twitter-api-key", "$TWITTER_API_KEY", \
-	                "--twitter-api-secret-key", "$TWITTER_API_SECRET_KEY", \
-	                "--twitter-access-token", "$TWITTER_ACCESS_TOKEN", \
-	                "--twitter-access-token-secret", "$TWITTER_ACCESS_TOKEN_SECRET" \
-]
+CMD /twitter-fn search NBA -o json -c 10 -p 8080 -S \
+                --twitter-api-key $TWITTER_API_KEY \
+                --twitter-api-secret-key $TWITTER_API_SECRET_KEY \
+                --twitter-access-token $TWITTER_ACCESS_TOKEN \
+                --twitter-access-token-secret $TWITTER_ACCESS_TOKEN_SECRET

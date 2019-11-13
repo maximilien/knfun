@@ -26,6 +26,7 @@ RUN apk add --no-cache ca-certificates
 
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /app/summary-fn /summary-fn
+COPY --from=builder /app/funcs/summary/*.html /funcs/summary/
 
 # Run the web service on container startup.
 CMD /summary-fn NBA -o text -c 10 -p 8080 -S \

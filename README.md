@@ -44,6 +44,7 @@ Table of Contents
    	* [TwitterFn](#TwitterFn)
 	* [WatsonFn](#WatsonFn)
 	* [SummaryFn](#SummaryFn)
+	* [Scaling](#scaling)
 
 # Setup
 
@@ -310,12 +311,12 @@ Deploying into Knative means you have a Knative cluster ready and your `$KUBECON
 ## TwitterFn
 
 ```bash
-./kn service create twitter-fn \
-			 --env TWITTER_API_KEY=$TWITTER_API_KEY \
-			 --env TWITTER_API_SECRET_KEY=$TWITTER_API_SECRET_KEY \
-			 --env TWITTER_ACCESS_TOKEN=$TWITTER_ACCESS_TOKEN \
-			 --env TWITTER_ACCESS_TOKEN_SECRET=$TWITTER_ACCESS_TOKEN_SECRET \
-			 --image docker.io/drmax/twitter-fn:latest \
+kn service create twitter-fn \
+		   --env TWITTER_API_KEY=$TWITTER_API_KEY \
+		   --env TWITTER_API_SECRET_KEY=$TWITTER_API_SECRET_KEY \
+		   --env TWITTER_ACCESS_TOKEN=$TWITTER_ACCESS_TOKEN \
+		   --env TWITTER_ACCESS_TOKEN_SECRET=$TWITTER_ACCESS_TOKEN_SECRET \
+		   --image docker.io/drmax/twitter-fn:latest \
 Creating service 'twitter-fn' in namespace 'default':
 
   0.496s Configuration "twitter-fn" is waiting for a Revision to become ready.
@@ -331,11 +332,11 @@ http://twitter-fn.knative-cluster.us-south.containers.cloud.ibm.com
 ## WatsonFn
 
 ```bash
-./kn service create watson-fn \
-			 --env WATSON_API_KEY=$WATSON_API_KEY \
-			 --env WATSON_API_URL=$WATSON_API_URL \
-			 --env WATSON_API_VERSION=$WATSON_API_VERSION \
-			 --image docker.io/drmax/watson-fn:latest \
+kn service create watson-fn \
+		   --env WATSON_API_KEY=$WATSON_API_KEY \
+		   --env WATSON_API_URL=$WATSON_API_URL \
+		   --env WATSON_API_VERSION=$WATSON_API_VERSION \
+		   --image docker.io/drmax/watson-fn:latest \
 Creating service 'watson-fn' in namespace 'default':
 
   0.197s Configuration "watson-fn" is waiting for a Revision to become ready.
@@ -358,15 +359,48 @@ export WATSON_FN_URL=watson-fn.knative-cluster.us-south.containers.cloud.ibm.com
 Deploy the `summary-fn` service with:
 
 ```bash
-./kn service create summary-fn \
-			 --env TWITTER_FN_URL=$TWITTER_FN_URL \
-			 --env WATSON_FN_URL=$WATSON_FN_URL \
-			 --image docker.io/drmax/summary-fn:latest \
+kn service create summary-fn \
+		   --env TWITTER_FN_URL=$TWITTER_FN_URL \
+		   --env WATSON_FN_URL=$WATSON_FN_URL \
+		   --image docker.io/drmax/summary-fn:latest \
 ...
 ```
 
-You can test the `summary-fn` function by going to the deployed function URL with your browser or by using `curl`. 
+You can test the `summary-fn` function by going to the deployed function URL with your browser or by using `curl`.
 
+## Scaling
+
+While by default, all services deployed to Knative will autoscale on demand, that is, scaling down to 0 if there are no access to their endpoint, and automatically scaling up when a request arrives again, there are times when you need to control the scaling characteristics for each service.
+
+In the [current scenario](#knfun), the requests to the *WatsonFn* service will be proportional to the number of images found from the *TwitterFn* requests. This could be orders of magnitude larger than *TwitterFn* requests and therefore we may want to parallelize the requests to the *WatsonFn* function.
+
+We can [control the scaling characteristics](https://knative.dev/docs/serving/configuring-the-autoscaler/) of any Knative service using the `kn` client `service update` command using the following flags:
+
+* `--concurrency-target` - recommendation for when to scale up based on the concurrent number of incoming request. Defaults to `--concurrency-limit` when given.
+* `-concurrency-limit` - hard limit of concurrent requests to be processed by a single replica.
+* `--max-scale` - maximum number of replicas.
+* `--min-scale` - minimum number of replicas.
+
+There are also means to control the amount of `memory` and `cpu` to request and to limit for any function. However, for this example, let's use the concurrency flags above to modify the current deployment of the `WatsonFn` service to increase the concurency target and limit and also the maximum and minimum scale. The following command will achieve this:
+
+```bash
+kn service update watson-fn --concurrency-limit 1 \
+                            --concurrency-target 1 \
+                            --max-scale 10
+
+Updating Service 'watson-fn' in namespace 'default':
+
+  0.124s The Configuration is still working to reflect the latest desired specification.
+  6.161s Traffic is not yet migrated to the latest revision.
+  6.193s Ingress has not yet been reconciled.
+  6.282s Waiting for VirtualService to be ready
+  7.597s Ready to serve.
+
+Service 'watson-fn' updated with latest revision 'watson-fn-gmdxr-7' and URL:
+http://watson-fn.default.knative-cluster.us-south.containers.cloud.ibm.com
+```
+
+By limiting and targeting the concurrency to 1 and setting the max scale 10, the *WatsonFn* will start with 1 replica and autoscale up to 10 replicas as requests comes in and each replica will be allowed to only process one request at a time.
 
 # Next steps
 

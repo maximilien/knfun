@@ -30,27 +30,30 @@ $(document).ready(function() {
         var words = [];
     </script>
     <div>
-        {{range $i, $cTweet := .ClassifiedTweets}}
+        {{$WatsonFnURL := .WatsonFnURL}}
+        {{$Timeout := .Timeout}}
+        {{range $i, $tweet := .Tweets}}
         <div>
-            {{range $j, $ClassifiedImage := $cTweet.ClassifiedImages}}
+            {{range $j, $imageURL := $tweet.ImageURLs}}
             	<div id="#{{$i}}_{{$j}}">
-            		<img src="{{$ClassifiedImage.ResolvedURL}}">
+            		<img src="{{$imageURL}}">
             	</div>
-    	        <div>
-    	        	{{range $ClassifiedImage.Classifiers}}
-    	        	<div>
-    		        	{{range .Classes}}
-    		        		<div>{{.Name}} ({{.Score}})
+                    <div>
+                    {{$ClassifiedImage := (ClassifyImage $WatsonFnURL $imageURL $Timeout)}}
+                    {{range $ClassifiedImage.Classifiers}}
+                    <div>
+                        {{range .Classes}}
+                            <div>{{.Name}} ({{.Score}})
                             <script type="text/javascript">
                                 words.push({text:"{{.Name}}", 
                                             weight:{{.Score}}*1000, 
                                             link:"#{{$i}}_{{$j}}"})
                             </script>
                             </div> 
-    		        	{{end}}
-    		        </div>
-    	        	{{end}}
-    	        </div>
+                        {{end}}
+                    </div>
+                    {{end}}
+                </div>
             {{end}}
             <div>{{.Text}}</div>
             <br/>

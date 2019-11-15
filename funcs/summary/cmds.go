@@ -66,6 +66,8 @@ func Execute() error {
 func (summaryFn *SummaryFn) summary(cmd *cobra.Command, args []string) error {
 	if summaryFn.StartServer {
 		http.HandleFunc("/", summaryFn.SummaryHandler)
+		http.HandleFunc("/async", summaryFn.SummaryAsyncHandler)
+
 		return http.ListenAndServe(fmt.Sprintf(":%d", summaryFn.Port), nil)
 	} else {
 		classifiedTweets, err := summaryFn.Summary()

@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"path"
 	"time"
 
 	"github.com/maximilien/knfun/funcs/common"
@@ -66,7 +67,12 @@ type SummaryFn struct {
 
 type SummaryPageData struct {
 	PageTitle string
-	Tweets    []ClassifiedTweet
+
+	Tweets           []Tweet
+	ClassifiedTweets []ClassifiedTweet
+
+	WatsonFnURL string
+	Timeout     int
 }
 
 func (summaryFn *SummaryFn) Summary() ([]ClassifiedTweet, error) {
@@ -85,13 +91,52 @@ func (summaryFn *SummaryFn) SummaryHandler(writer http.ResponseWriter, request *
 
 	tmpl := template.Must(template.ParseFiles("./funcs/summary/layout.html"))
 	data := SummaryPageData{
-		PageTitle: fmt.Sprintf("Recent tweets with images for search `%s`", summaryFn.SearchString),
-		Tweets:    classifiedTweets,
+		PageTitle:        fmt.Sprintf("Recent tweets with images for search `%s`", summaryFn.SearchString),
+		ClassifiedTweets: classifiedTweets,
 	}
 
 	err = tmpl.Execute(writer, data)
 	if err != nil {
 		log.Printf("Error executing template with classified tweets: %s\n", err.Error())
+		return
+	}
+}
+
+func (summaryFn *SummaryFn) SummaryAsyncHandler(writer http.ResponseWriter, request *http.Request) {
+	summaryFn.InitCommonQueryParams(request)
+	log.Printf("SummaryFn.Summary: s=\"%s\", c=\"%d\", o=\"%s\"", summaryFn.SearchString, summaryFn.Count, summaryFn.Output)
+
+	tweets, err := summaryFn.searchTweets(summaryFn.SearchString, summaryFn.Count)
+	if err != nil {
+		log.Printf("Error collecting tweets: %s\n", err.Error())
+		return
+	}
+
+	tmplName := path.Base("./funcs/summary/async_layout.html")
+	tmpl := template.New(tmplName)
+	tmpl.Funcs(template.FuncMap{
+		"ClassifyImage": func(watsonFnURL string, imageURL string, timeout int) (ClassifiedImage, error) {
+			return classifyImage(watsonFnURL, imageURL, timeout)
+		},
+	})
+
+	tmpl, err = tmpl.ParseFiles("./funcs/summary/async_layout.html")
+	if err != nil {
+		log.Printf("Error parsing Golang template for tweets: %s\n", err.Error())
+		return
+	}
+
+	data := SummaryPageData{
+		PageTitle: fmt.Sprintf("Recent tweets for search `%s`", summaryFn.SearchString),
+		Tweets:    tweets,
+
+		WatsonFnURL: summaryFn.WatsonFnURL,
+		Timeout:     summaryFn.Timeout,
+	}
+
+	err = tmpl.Execute(writer, data)
+	if err != nil {
+		log.Printf("Error executing template with tweets: %s\n", err.Error())
 		return
 	}
 }
@@ -132,14 +177,52 @@ func (summaryFn *SummaryFn) searchTweets(searchString string, count int) ([]Twee
 	return tweets, nil
 }
 
-func (summaryFn *SummaryFn) classifyImage(imageURL string) (ClassifiedImage, error) {
+func (summaryFn *SummaryFn) collectTweetsWithImages(tweets []Tweet) []Tweet {
+	tweetsWithImages := []Tweet{}
+	for _, tweet := range tweets {
+		if len(tweet.ImageURLs) > 0 {
+			tweetsWithImages = append(tweetsWithImages, tweet)
+		}
+	}
+	return tweetsWithImages
+}
+
+func (summaryFn *SummaryFn) collectClassifiedTweets() ([]ClassifiedTweet, error) {
+	tweets, err := summaryFn.searchTweets(summaryFn.SearchString, summaryFn.Count)
+	if err != nil {
+		return []ClassifiedTweet{}, err
+	}
+
+	tweetsWithImages := summaryFn.collectTweetsWithImages(tweets)
+	classifiedTweets := []ClassifiedTweet{}
+	for _, tweet := range tweetsWithImages {
+		classifiedImages := []ClassifiedImage{}
+		for _, imageURL := range tweet.ImageURLs {
+			classifiedImage, err := classifyImage(summaryFn.WatsonFnURL, imageURL, summaryFn.Timeout)
+			if err != nil {
+				return []ClassifiedTweet{}, err
+			}
+			classifiedImages = append(classifiedImages, classifiedImage)
+		}
+		classifiedTweet := ClassifiedTweet{
+			Text:             tweet.Text,
+			ClassifiedImages: classifiedImages,
+		}
+		classifiedTweets = append(classifiedTweets, classifiedTweet)
+	}
+	return classifiedTweets, nil
+}
+
+// Private function
+
+func classifyImage(watsonFnURL string, imageURL string, timeout int) (ClassifiedImage, error) {
 	var err error
 
 	watsonFnClient := http.Client{
-		Timeout: time.Second * time.Duration(summaryFn.Timeout),
+		Timeout: time.Second * time.Duration(timeout),
 	}
 
-	url := fmt.Sprintf("%s?q=%s&o=json", summaryFn.WatsonFnURL, imageURL)
+	url := fmt.Sprintf("%s?q=%s&o=json", watsonFnURL, imageURL)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return ClassifiedImage{}, err
@@ -166,43 +249,7 @@ func (summaryFn *SummaryFn) classifyImage(imageURL string) (ClassifiedImage, err
 	return classifiedImage, nil
 }
 
-func (summaryFn *SummaryFn) collectTweetsWithImages(tweets []Tweet) []Tweet {
-	tweetsWithImages := []Tweet{}
-	for _, tweet := range tweets {
-		if len(tweet.ImageURLs) > 0 {
-			tweetsWithImages = append(tweetsWithImages, tweet)
-		}
-	}
-	return tweetsWithImages
-}
-
-func (summaryFn *SummaryFn) collectClassifiedTweets() ([]ClassifiedTweet, error) {
-	tweets, err := summaryFn.searchTweets(summaryFn.SearchString, summaryFn.Count)
-	if err != nil {
-		return []ClassifiedTweet{}, err
-	}
-
-	tweetsWithImages := summaryFn.collectTweetsWithImages(tweets)
-	classifiedTweets := []ClassifiedTweet{}
-	for _, tweet := range tweetsWithImages {
-		classifiedImages := []ClassifiedImage{}
-		for _, imageURL := range tweet.ImageURLs {
-			classifiedImage, err := summaryFn.classifyImage(imageURL)
-			if err != nil {
-				return []ClassifiedTweet{}, err
-			}
-			classifiedImages = append(classifiedImages, classifiedImage)
-		}
-		classifiedTweet := ClassifiedTweet{
-			Text:             tweet.Text,
-			ClassifiedImages: classifiedImages,
-		}
-		classifiedTweets = append(classifiedTweets, classifiedTweet)
-	}
-	return classifiedTweets, nil
-}
-
-// Private ClassifiedTweet
+// ClassifiedTweet
 
 func (cTweet ClassifiedTweet) ToText() string {
 	sb := bytes.NewBufferString("")

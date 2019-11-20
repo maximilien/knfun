@@ -45,6 +45,7 @@ Table of Contents
 	* [WatsonFn](#WatsonFn)
 	* [SummaryFn](#SummaryFn)
 	* [Scaling](#scaling)
+	* [Traffic Splitting](#traffic_splitting)
 
 # Setup
 
@@ -401,6 +402,48 @@ http://watson-fn.default.knative-cluster.us-south.containers.cloud.ibm.com
 ```
 
 By limiting and targeting the concurrency to 1 and setting the max scale 10, the *WatsonFn* will start with 1 replica and autoscale up to 10 replicas as requests comes in and each replica will be allowed to only process one request at a time.
+
+## Traffic Splitting
+
+In situation when you want to experiment with different working versions of your functions, Knative supports the ability to setup your service deployment with traffic splitting. This allows some percentage of requests to a service to be routed to a specific version and some other percentage to another. The Knative client `kn` has commands to help you configure traffic splitting on any of your services and their revision easily.
+
+Let's explore one example with the `summary-fn` service. In the default implementation, the requests to `twitter-fn` and `watson-fn` are serialize. This results in slow responses in creating the UI and therefore a terrible experience to end users. A better one would be to make the calls to `watson-fn` services asynchronous and populate the image classifications and the tag cloud dynamically.
+
+The branch `summary-fn-async` has one such implemenation. If you checkout that branch and build the `summary-fn` with the code in that branch and then create an updated Docker image for the `SummaryFn` service and push it to `docker.io`.
+
+```bash
+git co summary-fn-async
+Switched to branch 'summary-fn-async'
+./hack/build.sh
+🕸️  Update
+🧽  Format
+⚖️  License
+📖 Docs
+🚧 Compile
+────────────────────────────────────────────
+success
+
+./hack/build.sh --docker
+🚧 🐳 build images
+   🚧 🐳 twitter-fn
+Sending build context to Docker daemon  58.05MB
+...
+🚧 🐳 summary-fn
+Sending build context to Docker daemon  58.05MB
+...
+   🐳 summary-fn
+The push refers to repository [docker.io/drmax/summary-fn]
+3b450874699e: Layer already exists
+1341569b6111: Layer already exists
+0ffb40f45640: Layer already exists
+77cae8ab23bf: Layer already exists
+latest: digest: sha256:f43b4310bb1f03538ad8712c00ac2aefc652163a243609d3f8909080962a60ed size: 1157
+```
+
+We can now deploy this as a new revision to `summary-fn` called `async` and traffic split with the latest version. The following commands show you the steps to achieve this.
+
+```bash
+```
 
 # Next steps
 

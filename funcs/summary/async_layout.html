@@ -29,30 +29,31 @@ $(document).ready(function() {
     <script type="text/javascript">
         var words = [];
     </script>
-    <div>
+    <div id="not-cloud">
         {{$WatsonFnURL := .WatsonFnURL}}
         {{$Timeout := .Timeout}}
         {{range $i, $tweet := .Tweets}}
+        {{if gt (len $tweet.ImageURLs) 0}}
         <div>
-            {{range $j, $imageURL := $tweet.ImageURLs}}
-            	<div id="#{{$i}}_{{$j}}">
+            {{range $j, $imageURL := $tweet.ImageURLs}}            
+            	<div id="tw{{$i}}_{{$j}}">
             		<img src="{{$imageURL}}">
             	</div>
-                    <div>
-                    {{$ClassifiedImage := (ClassifyImage $WatsonFnURL $imageURL $Timeout)}}
-                    {{range $ClassifiedImage.Classifiers}}
-                    <div>
-                        {{range .Classes}}
-                            <div>{{.Name}} ({{.Score}})
-                            <script type="text/javascript">
-                                words.push({text:"{{.Name}}", 
-                                            weight:{{.Score}}*1000, 
-                                            link:"#{{$i}}_{{$j}}"})
-                            </script>
-                            </div> 
-                        {{end}}
-                    </div>
-                    {{end}}
+                   <script type="text/javascript">
+                    $(document).ready(function() {
+                        $.get( "{{ $WatsonFnURL }}?q={{ $imageURL }}", function( data ) {
+                          data.classifiers.forEach(function(c){
+                            c.classes.forEach(function(b) {
+                                $("#tw{{$i}}_{{$j}}").append("<div>"+b["class"]+" "+b.score+"</div>");
+                                words.push({text: b["class"], 
+                                            weight: b.score*1000, 
+                                            link: "#tw{{$i}}_{{$j}}"})
+                            });
+                          });
+                          $('#cloud').jQCloud(words);
+                        });
+                    });
+                   </script>
                 </div>
             {{end}}
             <div>{{.Text}}</div>
@@ -60,8 +61,6 @@ $(document).ready(function() {
             <hr/>
         </div>
         {{end}}
+        {{end}}
     </div>
-    <script type="text/javascript">
-        $('#cloud').jQCloud(words);
-    </script>
 </body>

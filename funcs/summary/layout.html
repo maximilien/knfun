@@ -33,7 +33,7 @@ $(document).ready(function() {
         {{range $i, $cTweet := .ClassifiedTweets}}
         <div>
             {{range $j, $ClassifiedImage := $cTweet.ClassifiedImages}}
-            	<div id="#{{$i}}_{{$j}}">
+            	<div id="{{$i}}_{{$j}}">
             		<img src="{{$ClassifiedImage.ResolvedURL}}">
             	</div>
     	        <div>

@@ -74,6 +74,9 @@ func (classifyImageFn *ClassifyImageFn) ClassifyHandler(writer http.ResponseWrit
 		return
 	}
 
+	writer.Header().Add("Access-Control-Allow-Origin", "*")
+	writer.Header().Add("Access-Control-Allow-Headers", "x-requested-with")
+
 	writer.Header().Add("Content-Type", classifyImageFn.OutputContentType(classifyImageFn.Output))
 	fmt.Fprintf(writer, "%s\n", common.Flatten(&classifiedImageData, classifyImageFn.Output, classifiedImageData.ToText))
 }

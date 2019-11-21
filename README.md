@@ -46,6 +46,9 @@ Table of Contents
 	* [SummaryFn](#SummaryFn)
 	* [Scaling](#scaling)
 	* [Traffic Splitting](#traffic_splitting)
+		* [Tagging Revisions](#tagging_Rtable_revisions)
+		* [Deploy New Async Revision](#deploy_new_async_revision)
+		* [Splitting Traffic](#splitting_traffic)
 
 # Setup
 
@@ -405,9 +408,9 @@ By limiting and targeting the concurrency to 1 and setting the max scale 10, the
 
 ## Traffic Splitting
 
-In situation when you want to experiment with different working versions of your functions, Knative supports the ability to setup your service deployment with traffic splitting. This allows some percentage of requests to a service to be routed to a specific version and some other percentage to another. The Knative client `kn` has commands to help you configure traffic splitting on any of your services and their revision easily.
+In situation when you want to experiment with different working versions of your functions, Knative supports the ability to setup your service deployment with traffic splitting. This allows some percentage of requests to a service to be routed to a specific version and some other percentage to another. The Knative client `kn` has commands to help you configure traffic splitting on any of your services and their revisions easily.
 
-Let's explore one example with the `summary-fn` service. In the default implementation, the requests to `twitter-fn` and `watson-fn` are serialize. This results in slow responses in creating the UI and therefore a terrible experience to end users. A better one would be to make the calls to `watson-fn` services asynchronous and populate the image classifications and the tag cloud dynamically.
+Let's explore one example with the `summary-fn` service. In the default implementation, the requests to `twitter-fn` and `watson-fn` are serialized. This results in slow responses in rendering the UI and therefore a suboptimal experience for end users. A better one would be to make the calls to `watson-fn` services asynchronous and populate the image classifications and the tag cloud dynamically as they become available.
 
 ### Tagging Stable Revisions
 
@@ -437,9 +440,9 @@ http://summary-fn-default.kndemo-267179.sjc03.containers.appdomain.cloud
 
 ### Deploy New Async Revision
 
-The branch `summary-fn-async` has one such implemenation. The main change in that branch is that the `summary-fn` service root `\` now points to the async handler so that when users hit the `summary-fn` endpoint they will be using the async implementation of the UI that uses jQuery to call the `watson-fn` function vs doing it in a sync fashion in the stable revision. A brief summary of the changes are in the following files.
+The branch [`summary-fn-async`](https://github.com/maximilien/knfun/tree/summary-fn-async) has one such implemenation. The main change in that branch is that the `summary-fn` service root `\` now points to the async handler so that when users hit the `summary-fn` endpoint they will be using the async implementation of the UI that uses [jQuery](https://jquery.com/) to call the `watson-fn` function vs doing so in a sync fashion in the stable revision. A brief summary of the changes are in the following files.
 
-```bash
+```golang
 cat ./funcs/summary/cmds.go
 ...
 func (summaryFn *SummaryFn) summary(cmd *cobra.Command, args []string) error {
@@ -450,7 +453,7 @@ func (summaryFn *SummaryFn) summary(cmd *cobra.Command, args []string) error {
 
 The other change is in the file `./funcs/summary/async_layout.html` which is now used to render the `summary-fn` UI. In there the main change is to call the `watson-fn` function via jQuery.
 
-```html
+```javascript
 ...
 	$(document).ready(function() {
 	    $.get( "{{ $WatsonFnURL }}?q={{ $imageURL }}", function( data ) {
@@ -492,19 +495,13 @@ Sending build context to Docker daemon  58.05MB
 ...
    🐳 summary-fn
 The push refers to repository [docker.io/drmax/summary-fn]
-3b450874699e: Layer already exists
-1341569b6111: Layer already exists
-0ffb40f45640: Layer already exists
-77cae8ab23bf: Layer already exists
-latest: digest: sha256:f43b4310bb1f03538ad8712c00ac2aefc652163a243609d3f8909080962a60ed size: 1157
+...
 ```
 
 Now let's now deploy the new `async` revision and tag it as such.
 
 ```bash
 kn service update summary-fn \
-		   --env TWITTER_FN_URL=$TWITTER_FN_URL \
-		   --env WATSON_FN_URL=$WATSON_FN_URL \
 		   --image docker.io/drmax/summary-fn:latest
 ...
 
@@ -521,9 +518,9 @@ Service 'summary-fn' updated with latest revision 'summary-fn-jtpyt-1' (unchange
 http://summary-fn-default.kndemo-267179.sjc03.containers.appdomain.cloud
 ```
 
-### Split Traffic
+### Splitting Traffic
 
-We can now show the details of the `summary-fn` function so we can see the various revisions and tags in order  split traffic between the revisions tagged `sync` and `async` at 50% each.
+We can now show the details of the `summary-fn` function so we can see the various revisions and tags in order split traffic 50/50 between the revisions tagged `sync` and `async`.
 
 ```bash
 kn service describe summary-fn
@@ -556,7 +553,7 @@ Conditions:
 Splitting traffic is a `service update` command that uses the `--traffic` flag to set the different revisions and the traffic percentage values.
 
 ```bash
-kn service update summary-fn --traffic sync=50,@latest=50
+kn service update summary-fn --traffic async=50,sync=50
 Updating Service 'summary-fn' in namespace 'default':
 
   0.310s Waiting for VirtualService to be ready
@@ -568,16 +565,12 @@ http://summary-fn-default.kndemo-267179.sjc03.containers.appdomain.cloud
 
 Now when users access the URL for the `summary-fn` function they will (on average) see 50% the sync page (which takes a few seconds to reder) and 50% the async version which is instantaneous and asynchronously shows the tag cloud for the image features.
 
-
 # Next steps
 
-This initial demo will be presented at the IBM mini-theater at KubeCon San Diego on Thursday November 21st, 2019. Please stop by the IBM booth mini theater to see the exact time and to attend and chat afterwards.
-
-Additionally, there are three immediate next steps I would like to see for v2 of this demo:
+This initial demo was [presented](docs/kubecon-2019-sandiego.pdf) at the IBM mini-theater at KubeCon San Diego on Thursday November 21st, 2019. Additionally, there are three immediate next steps I would like to see for v2 of this demo:
 
 1. Improve the UI output for the `SummaryFn`. In particular making it more dynamic and usable for live demos.
-2. Show more `kn` features like revisions and scaling and how to traffic split between different revisions, e.g., deploy updates to `TwitterFn` and have `SummaryFn` access different revisions.
-3. Use Knative's eventing to refresh the `SummaryFn` page automatically when new tweets are available. This assumes a Twitter API Knative importer and broker is available.
+2. Use Knative's eventing to refresh the `SummaryFn` page automatically when new tweets are available. This assumes a Twitter API Knative importer and broker is available.
 
 # Participate
 

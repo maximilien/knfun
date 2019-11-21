@@ -73,6 +73,11 @@ func (summaryFn *SummaryFn) summary(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
+
+		for _, cTweet := range classifiedTweets {
+			fmt.Printf("%s\n", cTweet.Flatten(summaryFn.Output))
+			fmt.Printf("=======\n\n")
+		}
 	}
 
 	return nil

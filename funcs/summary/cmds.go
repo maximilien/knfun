@@ -65,19 +65,13 @@ func Execute() error {
 
 func (summaryFn *SummaryFn) summary(cmd *cobra.Command, args []string) error {
 	if summaryFn.StartServer {
-		http.HandleFunc("/", summaryFn.SummaryHandler)
-		http.HandleFunc("/async", summaryFn.SummaryAsyncHandler)
+		http.HandleFunc("/", summaryFn.SummaryAsyncHandler)
 
 		return http.ListenAndServe(fmt.Sprintf(":%d", summaryFn.Port), nil)
 	} else {
 		classifiedTweets, err := summaryFn.Summary()
 		if err != nil {
 			return err
-		}
-
-		for _, cTweet := range classifiedTweets {
-			fmt.Printf("%s\n", cTweet.Flatten(summaryFn.Output))
-			fmt.Printf("=======\n\n")
 		}
 	}
 

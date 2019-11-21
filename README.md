@@ -409,7 +409,66 @@ In situation when you want to experiment with different working versions of your
 
 Let's explore one example with the `summary-fn` service. In the default implementation, the requests to `twitter-fn` and `watson-fn` are serialize. This results in slow responses in creating the UI and therefore a terrible experience to end users. A better one would be to make the calls to `watson-fn` services asynchronous and populate the image classifications and the tag cloud dynamically.
 
-The branch `summary-fn-async` has one such implemenation. If you checkout that branch and build the `summary-fn` with the code in that branch and then create an updated Docker image for the `SummaryFn` service and push it to `docker.io`.
+### Tagging Stable Revisions
+
+However, let's first tag the current revision as `stable`. We do this by listing the revisions for `summary-fn` and tagging the latest one. We first need to find the revision name for the current stable one.
+
+```bash
+kn revision list -s summary-fn
+NAME                 SERVICE      GENERATION   AGE   CONDITIONS   READY   REASON
+summary-fn-tcthz-1   summary-fn   8            10h   4 OK / 4     True
+summary-fn-lljhz-1   summary-fn   7            20h   3 OK / 4     True
+```
+
+We can notice that the revision listed at the top is the most current revision with generation number 8. It is also ready and have name `summary-fn-tcthz-1`. We can use the name to tag it as `latest`, `sync`, and `stable`.
+
+```bash
+kn service update summary-fn --tag summary-fn-tcthz-1=latest \
+							 --tag summary-fn-tcthz-1=stable \
+							 --tag summary-fn-tcthz-1=sync 
+Updating Service 'summary-fn' in namespace 'default':
+
+  0.310s Waiting for VirtualService to be ready
+  1.114s Ready to serve.
+
+Service 'summary-fn' updated with latest revision 'summary-fn-tcthz-1' (unchanged) and URL:
+http://summary-fn-default.kndemo-267179.sjc03.containers.appdomain.cloud
+```
+
+### Deploy New Async Revision
+
+The branch `summary-fn-async` has one such implemenation. The main change in that branch is that the `summary-fn` service root `\` now points to the async handler so that when users hit the `summary-fn` endpoint they will be using the async implementation of the UI that uses jQuery to call the `watson-fn` function vs doing it in a sync fashion in the stable revision. A brief summary of the changes are in the following files.
+
+```bash
+cat ./funcs/summary/cmds.go
+...
+func (summaryFn *SummaryFn) summary(cmd *cobra.Command, args []string) error {
+	if summaryFn.StartServer {
+		http.HandleFunc("/", summaryFn.SummaryAsyncHandler)
+...
+```
+
+The other change is in the file `./funcs/summary/async_layout.html` which is now used to render the `summary-fn` UI. In there the main change is to call the `watson-fn` function via jQuery.
+
+```html
+...
+	$(document).ready(function() {
+	    $.get( "{{ $WatsonFnURL }}?q={{ $imageURL }}", function( data ) {
+	      data.classifiers.forEach(function(c){
+	        c.classes.forEach(function(b) {
+	            $("#tw{{$i}}_{{$j}}").append("<div>"+b["class"]+" "+b.score+"</div>");
+	            words.push({text: b["class"], 
+	                        weight: b.score*1000, 
+	                        link: "#tw{{$i}}_{{$j}}"})
+	        });
+	      });
+	      $('#cloud').jQCloud(words);
+	    });
+	});
+...
+```
+
+If you checkout that branch and build the `summary-fn` with the code in that branch and then create an updated Docker image for the `SummaryFn` service and push it to `docker.io`.
 
 ```bash
 git co summary-fn-async
@@ -440,10 +499,75 @@ The push refers to repository [docker.io/drmax/summary-fn]
 latest: digest: sha256:f43b4310bb1f03538ad8712c00ac2aefc652163a243609d3f8909080962a60ed size: 1157
 ```
 
-We can now deploy this as a new revision to `summary-fn` called `async` and traffic split with the latest version. The following commands show you the steps to achieve this.
+Now let's now deploy the new `async` revision and tag it as such.
 
 ```bash
+kn service update summary-fn \
+		   --env TWITTER_FN_URL=$TWITTER_FN_URL \
+		   --env WATSON_FN_URL=$WATSON_FN_URL \
+		   --image docker.io/drmax/summary-fn:latest
+...
+
+Service 'watson-fn' updated with latest revision 'summary-fn-jtpyt-1' and URL:
+http://watson-fn.default.knative-cluster.us-south.containers.cloud.ibm.com
+
+kn service update summary-fn --tag summary-fn-jtpyt-1=async
+Updating Service 'summary-fn' in namespace 'default':
+
+  0.310s Waiting for VirtualService to be ready
+  1.114s Ready to serve.
+
+Service 'summary-fn' updated with latest revision 'summary-fn-jtpyt-1' (unchanged) and URL:
+http://summary-fn-default.kndemo-267179.sjc03.containers.appdomain.cloud
 ```
+
+### Split Traffic
+
+We can now show the details of the `summary-fn` function so we can see the various revisions and tags in order  split traffic between the revisions tagged `sync` and `async` at 50% each.
+
+```bash
+kn service describe summary-fn
+Name:       summary-fn
+Namespace:  default
+Labels:     knfun=demo
+Age:        10d
+URL:        http://summary-fn-default.kndemo-267179.sjc03.containers.appdomain.cloud
+Cluster:    http://summary-fn.default.svc.cluster.local
+
+Revisions:
+  100%  @latest (summary-fn-tcthz-1) [8] (24m)
+        Image:  docker.io/drmax/summary-fn:latest (pinned to f43b43)
+     +  summary-fn-tcthz-1 (current @latest) #latest [8] (24m)
+        Image:  docker.io/drmax/summary-fn:latest (pinned to f43b43)
+     +  summary-fn-tcthz-1 (current @latest) #stable [8] (24m)
+        Image:  docker.io/drmax/summary-fn:latest (pinned to f43b43)
+     +  summary-fn-tcthz-1 (current @latest) #sync [8] (24m)
+        Image:  docker.io/drmax/summary-fn:latest (pinned to f43b43)
+     +  summary-fn-jtpyt-1 (current @latest) #async [9] (28m)
+        Image:  docker.io/drmax/summary-fn:latest (pinned to f43b43)
+
+Conditions:
+  OK TYPE                   AGE REASON
+  ++ Ready                   5s
+  ++ ConfigurationsReady    24m
+  ++ RoutesReady             5s
+```
+
+Splitting traffic is a `service update` command that uses the `--traffic` flag to set the different revisions and the traffic percentage values.
+
+```bash
+kn service update summary-fn --traffic sync=50,@latest=50
+Updating Service 'summary-fn' in namespace 'default':
+
+  0.310s Waiting for VirtualService to be ready
+  1.114s Ready to serve.
+
+Service 'summary-fn' updated with latest revision 'summary-fn-jtpyt-1' (unchanged) and URL:
+http://summary-fn-default.kndemo-267179.sjc03.containers.appdomain.cloud
+```
+
+Now when users access the URL for the `summary-fn` function they will (on average) see 50% the sync page (which takes a few seconds to reder) and 50% the async version which is instantaneous and asynchronously shows the tag cloud for the image features.
+
 
 # Next steps
 

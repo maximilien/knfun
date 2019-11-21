@@ -65,8 +65,11 @@ func Execute() error {
 
 func (summaryFn *SummaryFn) summary(cmd *cobra.Command, args []string) error {
 	if summaryFn.StartServer {
-		http.HandleFunc("/", summaryFn.SummaryHandler)
-		http.HandleFunc("/async", summaryFn.SummaryAsyncHandler)
+		if os.Getenv("ASYNC") != "" {
+			http.HandleFunc("/", summaryFn.SummaryAsyncHandler)
+		} else {
+			http.HandleFunc("/", summaryFn.SummaryHandler)
+		}
 
 		return http.ListenAndServe(fmt.Sprintf(":%d", summaryFn.Port), nil)
 	} else {

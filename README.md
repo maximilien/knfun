@@ -354,7 +354,7 @@ http://watson-fn.default.knative-cluster.us-south.containers.cloud.ibm.com
 
 ## SummaryFn
 
-You need to then set the environment variables `TWITTER_FN_URL` and `WATSON_FN_URL` to the URLs that `kn service create ...` showed for the respective function. For instance:
+You need to then set the environment variables `TWITTER_FN_URL` and `WATSON_FN_URL` to the URLs that `kn service create ...` showed for the respective function creation. For instance:
 
 ```bash
 export TWITTER_FN_URL=twitter-fn.knative-cluster.us-south.containers.cloud.ibm.com
@@ -374,18 +374,18 @@ You can test the `summary-fn` function by going to the deployed function URL wit
 
 ## Scaling
 
-While by default, all services deployed to Knative will autoscale on demand, that is, scaling down to 0 if there are no access to their endpoint, and automatically scaling up when a request arrives again, there are times when you need to control the scaling characteristics for each service.
+While by default, all services deployed to Knative will autoscale on demand, that is, scaling down to 0 if there are no requests to their endpoint, and automatically scaling up when a request arrives again, there are times when you need to control the scaling characteristics for each service.
 
 In the [current scenario](#knfun), the requests to the *WatsonFn* service will be proportional to the number of images found from the *TwitterFn* requests. This could be orders of magnitude larger than *TwitterFn* requests and therefore we may want to parallelize the requests to the *WatsonFn* function.
 
 We can [control the scaling characteristics](https://knative.dev/docs/serving/configuring-the-autoscaler/) of any Knative service using the `kn` client `service update` command using the following flags:
 
-* `--concurrency-target` - recommendation for when to scale up based on the concurrent number of incoming request. Defaults to `--concurrency-limit` when given.
-* `-concurrency-limit` - hard limit of concurrent requests to be processed by a single replica.
+* `--concurrency-target` - recommendation for when to scale up based on the concurrent number of incoming requests. Defaults to `--concurrency-limit` when given.
+* `-concurrency-limit` - hard limit of concurrent requests to be processed by a single replica (single service instance).
 * `--max-scale` - maximum number of replicas.
 * `--min-scale` - minimum number of replicas.
 
-There are also means to control the amount of `memory` and `cpu` to request and to limit for any function. However, for this example, let's use the concurrency flags above to modify the current deployment of the `WatsonFn` service to increase the concurency target and limit and also the maximum and minimum scale. The following command will achieve this:
+There are also means to control the amount of `memory` and `cpu` to request for and to limit any function. However, for this example, let's use the concurrency flags above to modify the current deployment of the `WatsonFn` service such that we increase the concurency target and limit as well as the maximum and minimum scale values. The following command will achieve this:
 
 ```bash
 kn service update watson-fn --concurrency-limit 1 \
@@ -404,13 +404,13 @@ Service 'watson-fn' updated with latest revision 'watson-fn-gmdxr-7' and URL:
 http://watson-fn.default.knative-cluster.us-south.containers.cloud.ibm.com
 ```
 
-By limiting and targeting the concurrency to 1 and setting the max scale 10, the *WatsonFn* will start with 1 replica and autoscale up to 10 replicas as requests comes in and each replica will be allowed to only process one request at a time.
+By limiting and targeting the concurrency to 1 and setting the max scale 10, the *WatsonFn* will start with 1 replica and autoscale up to 10 replicas as requests comes in while each replica will be allowed to only process one request at a time.
 
 ## Traffic Splitting
 
-In situation when you want to experiment with different working versions of your functions, Knative supports the ability to setup your service deployment with traffic splitting. This allows some percentage of requests to a service to be routed to a specific version and some other percentage to another. The Knative client `kn` has commands to help you configure traffic splitting on any of your services and their revisions easily.
+In situation when you want to experiment with different working versions of your functions, Knative supports the ability to setup your service deployment with traffic splitting. This allows some percentage of requests to a service to be routed to a specific version and some other percentage to another. This in effect allows you to [A/B test](https://en.wikipedia.org/wiki/A/B_testing) between revisions.
 
-Let's explore one example with the `summary-fn` service. In the default implementation, the requests to `twitter-fn` and `watson-fn` are serialized. This results in slow responses in rendering the UI and therefore a suboptimal experience for end users. A better one would be to make the calls to `watson-fn` services asynchronous and populate the image classifications and the tag cloud dynamically as they become available.
+The Knative client `kn` has commands to help you configure traffic splitting on any of your services and their revisions easily. Let's explore one example with the `summary-fn` service. In the default implementation, the requests to `twitter-fn` and `watson-fn` are serialized. This results in slow responses in rendering the UI and therefore a suboptimal experience for end users. A better one would be to make the calls to `watson-fn` services asynchronous and populate the image classifications and the tag cloud dynamically as they become available.
 
 ### Tagging Stable Revisions
 
@@ -520,7 +520,7 @@ http://summary-fn-default.kndemo-267179.sjc03.containers.appdomain.cloud
 
 ### Splitting Traffic
 
-We can now show the details of the `summary-fn` function so we can see the various revisions and tags in order split traffic 50/50 between the revisions tagged `sync` and `async`.
+We can show the details of the `summary-fn` function so we can see the various revisions and tags in order split traffic 50/50 between the revisions tagged `sync` and `async`.
 
 ```bash
 kn service describe summary-fn
@@ -567,7 +567,7 @@ Now when users access the URL for the `summary-fn` function they will (on averag
 
 # Next steps
 
-This initial demo was [presented](docs/kubecon-2019-sandiego.pdf) at the IBM mini-theater at KubeCon San Diego on Thursday November 21st, 2019. Additionally, there are three immediate next steps I would like to see for v2 of this demo:
+This initial demo was [presented](docs/kubecon-2019-sandiego.pdf) at the IBM mini-theater at KubeCon San Diego on Thursday November 21st, 2019. Additionally, there are two immediate next steps I would like to see for v2 of this demo:
 
 1. Improve the UI output for the `SummaryFn`. In particular making it more dynamic and usable for live demos.
 2. Use Knative's eventing to refresh the `SummaryFn` page automatically when new tweets are available. This assumes a Twitter API Knative importer and broker is available.

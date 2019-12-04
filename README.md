@@ -10,7 +10,7 @@ The first demo uses three functions in a live demo setting (ideally with an audi
 
 1. *TwitterFn* search function (via [Twitter's API](https://developer.twitter.com/en/docs))
 	* _in_: hashtags or string to search
-	* _in_: count (max number of tweets)
+	* _in_: count (max number of tweets to return)
 	* _out_: recent tweets with images
 
 2. *WatsonFn* visual recognition image classifier function (via IBM's [Watson APIs](https://cloud.ibm.com/apidocs/visual-recognition/visual-recognition-v3))
@@ -18,11 +18,11 @@ The first demo uses three functions in a live demo setting (ideally with an audi
 	* _out_: image features (class) with confidence (score)
 
 3. *SummaryFn* function
-	* _in_: search string and twitterFn and WatsonFn URLs
+	* _in_: search string and *TwitterFn* and *WatsonFn* URLs
 	* _in_: count (max number of tweets)
 	* _out_: HTML page displaying summary
 
-Both the *TwitterFn* and *WatsonFn* require credentials to execute. This means that the keys for both the *TwitterFn* and *WatsonFn* are also required as input, however, to simplify the discussion, they are sometimes ommited in diagrams and some other places.
+Both the *TwitterFn* and *WatsonFn* require credentials to execute. This means that the demoer's secret keys for both the *TwitterFn* and *WatsonFn* are also required as input, however, to simplify the discussion, the keys are sometimes ommited in diagrams and other places.
 
 Table of Contents
 =================
@@ -46,26 +46,26 @@ Table of Contents
 	* [SummaryFn](#SummaryFn)
 	* [Scaling](#scaling)
 	* [Traffic Splitting](#traffic_splitting)
-		* [Tagging Revisions](#tagging_Rtable_revisions)
+		* [Tagging Revisions](#tagging_revisions)
 		* [Deploy New Async Revision](#deploy_new_async_revision)
 		* [Splitting Traffic](#splitting_traffic)
 
 # Setup
 
-This repository is self-contained, except for the following dependencies which you should resolve before getting started:
+This repository is self-contained, except for the following dependencies which you should resolved before getting started:
 
 1. Go version go1.12.x or later. Go to [Golang download](https://golang.org/dl/) page to get the version for your OS.
 2. [Docker engine](https://docs.docker.com/engine/installation/) for your machine. Specifically ensure you can execute the `docker` executable at the command line.
 3. [Knative](https://knative.dev/) cluster. Depending on your Kubernetes cluster provider you can find different means for [getting Knative installed](https://knative.dev/docs/install/) onto your cluster.
 4. [Knative's `kn` client](https://github.com/knative/client). Once you have your Knative cluster, follow the steps to build `kn` or get one from the latest [released builds](https://github.com/knative/client/releases).
 
-Once these four dependencies are met, continue below with steps to get and set your APIs credentials, build, test, and deploy the functions for the demos.
+Once these four dependencies are met, continue below with the steps to get and set your APIs credentials, build, test, deploy, and run the functions for the demo.
 
 ## Credentials
 
-As mentioned above, you need to get credentials for both the [Twitter API](https://developer.twitter.com/en/docs) and the [IBM Watson API](https://cloud.ibm.com/apidocs/visual-recognition/visual-recognition-v3). Once you do, then you should be able to follow the steps below. 
+As mentioned above, you need to get credentials for both the [Twitter API](https://developer.twitter.com/en/docs) and the [IBM Watson API](https://cloud.ibm.com/apidocs/visual-recognition/visual-recognition-v3). Once you do, following links, then you should be able to continue with the steps below. 
 
-To facilitate using and passing these secrets at the command line, I recommend setting environment variables for each string in your shell. Feel free to use other means, but in the description below I am assuming that the secret values are set to the environment variables correspondingly named.
+To facilitate using and passing these secrets at the command line, and to avoid divulging secrets during demos, I recommend setting environment variables for each secret string in your shell. Feel free to use other means, but in the description below I am assuming that the secret values are set to the environment variables correspondingly named.
 
 ### Twitter
 
@@ -76,7 +76,7 @@ Once you have access to the [Twitter API](https://developer.twitter.com/en/docs)
 3. Twitter Access Token - TWITTER_ACCESS_TOKEN
 4. Twitter Access Token Secret - TWITTER_ACCESS_TOKEN_SECRET
 
-To set these on your shell, do the following replacing the content in `"..."` with your key value
+To set these on your shell, do the following replacing the content in `"..."` (without the `"`) with your key value
 
 ```bash
 export TWITTER_API_KEY="your Twitter API key value here"
@@ -101,7 +101,7 @@ export WATSON_API_VERSION=2018-03-19
 
 # Build
 
-After cloning this repository. You can build all functions with the following command:
+After cloning [this repository](https://github.com/maximilien/knfun). You can build all the functions with the following command:
 
 ```bash
 ./hack/build.sh
@@ -114,7 +114,7 @@ After cloning this repository. You can build all functions with the following co
 success
 ```
 
-The result is that you should now have three executables: `twitter-fn`, `watson-fn`, and `summary-fun`. 
+The result is that you should have three executables: `twitter-fn`, `watson-fn`, and `summary-fn`. 
 
 ```bash
 ls
@@ -122,7 +122,7 @@ LICENSE    docs       go.mod     hack       twitter-fn watson-fn
 README.md  funcs      go.sum     summary-fn vendor
 ```
 
-These are designed as both CLIs and server functions that you can test locally and deploy and run on Knative.
+These executables are designed as both CLIs and server functions that you can test locally as well as deploy and run on Knative.
 
 # Test
 
@@ -130,29 +130,29 @@ Let's first explore how to test the functions locally. Later we will show how yo
 
 ## twitter-fn
 
-For each function you can run them locally as a CLI to get immediate response. You can also run them as a local server and use your browser to see the responses and changing input. For example, the following will display recent tweets that have the word `NBA`
+For each function you can run them locally as a CLI to get immediate response. You can also run them as a local server and use your browser to see the responses and changing input. For example, the following will display recent tweets (up to 20) that have the word `NBA`
 
 ```bash
 ./twitter-fn search NBA -c 20 -o text \
 			 --twitter-api-key $TWITTER_API_KEY \
 			 --twitter-api-secret-key $TWITTER_API_SECRET_KEY \
 			 --twitter-access-token $TWITTER_ACCESS_TOKEN \
-			 --twitter-access-token-secret $TWITTER_ACCESS_TOKEN_SECRET \
+			 --twitter-access-token-secret $TWITTER_ACCESS_TOKEN_SECRET
 ```
 
-To run this function as a server and see JSON output on your browser or with curl, do the following:
+To run this function as a server and see JSON output on your browser or with curl, do the following (not the `-S` flag):
 
 ```bash
 ./twitter-fn search NBA -c 20 -o json -S -p 8080 \
 			 --twitter-api-key $TWITTER_API_KEY \
 			 --twitter-api-secret-key $TWITTER_API_SECRET_KEY \
 			 --twitter-access-token $TWITTER_ACCESS_TOKEN \
-			 --twitter-access-token-secret $TWITTER_ACCESS_TOKEN_SECRET \
+			 --twitter-access-token-secret $TWITTER_ACCESS_TOKEN_SECRET
 ```
 
-Then open your browser at `http://localhost:8080` or do `curl http://localhost:8080`. 
+Then open your browser at `http://localhost:8080` or do `curl http://localhost:8080`. You can then `CTRL-C` to stop the server.
 
-To see what other options are available for the `twitter-fn` `search` function get the CLI help with: `./twitter-fn search --help`
+To see what other options are available for the `twitter-fn` `search` function get the CLI help with: `./twitter-fn search --help` or `./twitter-fn search -h`.
 
 ## watson-fn
 
@@ -162,7 +162,7 @@ Similarly for the `watson-fn` function you can test it locally with any image fo
 ./watson-fn vr classify https://upload.wikimedia.org/wikipedia/commons/c/c3/Jordan_by_Lipofsky_16577.jpg -o text \
 			   --watson-api-key $WATSON_API_KEY \
 			   --watson-api-url $WATSON_API_URL \
-			   --watson-api-version $WATSON_API_VERSION \
+			   --watson-api-version $WATSON_API_VERSION
 ```
 
 To run this as a server and see JSON output on your browser or with curl, do the following:
@@ -171,10 +171,10 @@ To run this as a server and see JSON output on your browser or with curl, do the
 ./watson-fn vr classify https://upload.wikimedia.org/wikipedia/commons/c/c3/Jordan_by_Lipofsky_16577.jpg -o json -p 8081 \
 			   --watson-api-key $WATSON_API_KEY \
 			   --watson-api-url $WATSON_API_URL \
-			   --watson-api-version $WATSON_API_VERSION \
+			   --watson-api-version $WATSON_API_VERSION
 ```
 
-You can change the input at the browser by passing the URL with the `q` or `query` URL paramter. For example: `http://localhjost:8081?http://pbs.twimg.com/media/EHpWVAvWoAEfVzO.jpg&o=json`. If you change the `-o` value to `text` then the image classification will display as formatted text.
+You can change the input at the browser by passing the URL with the `q` or `query` URL paramter. For example: `http://localhjost:8081?q=http://pbs.twimg.com/media/EHpWVAvWoAEfVzO.jpg&o=json`. If you change the `-o` value to `text` then the image classification will display as formatted text.
 
 ## summary-fn
 
@@ -183,7 +183,7 @@ Finally, you can test the `summary-fn` function locally after running the `twitt
 ```bash
 ./summary-fn NBA -o text -c 10 -o text \
  	     --twitter-fn-url http://localhost:8080 \
-	     --watson-fn-url http://localhost:8081 \
+	     --watson-fn-url http://localhost:8081
 ```
 
 To run `summary-fn` as a server and see output on your browser or with curl, do the following:
@@ -191,14 +191,14 @@ To run `summary-fn` as a server and see output on your browser or with curl, do 
 ```bash
 ./summary-fn NBA -o text -c 10 -o text -S -p 8082 \
              --twitter-fn-url http://localhost:8080 \
-             --watson-fn-url http://localhost:8081 \
+             --watson-fn-url http://localhost:8081
 ```
 
 Open your browser at `http://localhost:8082` or `curl http://localhost:8082`
 
 ## Credentials config
 
-You can avoid passing all the credentials everytime by creating a file named `.knfun.yaml` in your home directory and adding the credential values in it. The following command will create that file and set the values from the environment variables we discussed [above](#credentials).
+You can avoid passing all the credentials everytime as flags by creating a file named `.knfun.yaml` in your home directory and adding the credential values in it. The following command will create that file and set the values from the environment variables we discussed [above](#credentials).
 
 ```bash
 touch ~/.knfun.yaml
@@ -215,13 +215,13 @@ watson-api-version: 2018-03-19
 EOF
 ```
 
-Once this config `.knfun.yaml` is present in your home directory, execution of the `twitter-fn` and `watson-fn` will pick up the key values automatically. So instead of invoking:
+Once this config `.knfun.yaml` is present in your home directory, execution of the `twitter-fn` and `watson-fn` will pick up the keys values automatically. So instead of invoking:
 
 ```bash
 ./watson-fn vr classify http://pbs.twimg.com/media/EHpWVAvWoAEfVzO.jpg -o json \
 						--watson-api-key $WATSON_API_KEY \
 						--watson-api-url $WATSON_API_URL \
-						--watson-api-version $WATSON_API_VERSION \
+						--watson-api-version $WATSON_API_VERSION
 ```
 
 You can simply do:
@@ -253,7 +253,7 @@ PASS
 ok  	github.com/maximilien/knfun/test/e2e	4.052s
 ```
 
-To run a quick "smoke" test that verifies each function then run the `./hack/build.sh --test`. It will display any errors and place output content in a file named `/tmp/knfun-test-output.XXXXXX`.
+To run a quick "smoke" test that verifies each function, run the `./hack/build.sh --test`. It will display any errors and place output content in a file named `/tmp/knfun-test-output.XXXXXX`.
 
 ```bash
 ./hack/build.sh --test
@@ -265,9 +265,9 @@ To run a quick "smoke" test that verifies each function then run the `./hack/bui
 
 In order to deploy into a Knative cluster, you must first create images and publish them into a repository. We will be using Docker for that purpose. 
 
-The `./hack/build.sh --docker-images` and `./hack/build.sh --docker-push` will respectively create Docker images and push them in your [Docker Hub](https://docker.io) account for you. 
+The `./hack/build.sh --docker-images` and `./hack/build.sh --docker-push` will respectively create Docker images and push them in your [Docker Hub](https://docker.io) account for you. Or use `--docker` to both build and push the images at once.
 
-You simply need to make sure the `docker` executable is visible to your shell and that the environment variable `DOCKER_USERNAME` is set to your Docker Hub user ID.
+You need to make sure the `docker` executable is visible to your shell and that the environment variable `DOCKER_USERNAME` is set to your Docker Hub user ID.
 
 ```bash
 ./hack/build.sh --docker-images
@@ -320,7 +320,7 @@ kn service create twitter-fn \
 		   --env TWITTER_API_SECRET_KEY=$TWITTER_API_SECRET_KEY \
 		   --env TWITTER_ACCESS_TOKEN=$TWITTER_ACCESS_TOKEN \
 		   --env TWITTER_ACCESS_TOKEN_SECRET=$TWITTER_ACCESS_TOKEN_SECRET \
-		   --image docker.io/drmax/twitter-fn:latest \
+		   --image docker.io/drmax/twitter-fn:latest
 Creating service 'twitter-fn' in namespace 'default':
 
   0.496s Configuration "twitter-fn" is waiting for a Revision to become ready.
@@ -340,7 +340,7 @@ kn service create watson-fn \
 		   --env WATSON_API_KEY=$WATSON_API_KEY \
 		   --env WATSON_API_URL=$WATSON_API_URL \
 		   --env WATSON_API_VERSION=$WATSON_API_VERSION \
-		   --image docker.io/drmax/watson-fn:latest \
+		   --image docker.io/drmax/watson-fn:latest
 Creating service 'watson-fn' in namespace 'default':
 
   0.197s Configuration "watson-fn" is waiting for a Revision to become ready.
@@ -366,7 +366,7 @@ Deploy the `summary-fn` service with:
 kn service create summary-fn \
 		   --env TWITTER_FN_URL=$TWITTER_FN_URL \
 		   --env WATSON_FN_URL=$WATSON_FN_URL \
-		   --image docker.io/drmax/summary-fn:latest \
+		   --image docker.io/drmax/summary-fn:latest
 ...
 ```
 

@@ -45,10 +45,10 @@ Table of Contents
 	* [WatsonFn](#WatsonFn)
 	* [SummaryFn](#SummaryFn)
 	* [Scaling](#scaling)
-	* [Traffic Splitting](#traffic_splitting)
-		* [Tagging Revisions](#tagging_revisions)
-		* [Deploy New Async Revision](#deploy_new_async_revision)
-		* [Splitting Traffic](#splitting_traffic)
+	* [Traffic Splitting](#traffic-splitting)
+		* [Tagging Revisions](#tagging-revisions)
+		* [Deploy New Async Revision](#deploy-new-async-revision)
+		* [Splitting Traffic](#splitting-traffic)
 
 # Setup
 

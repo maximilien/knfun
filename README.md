@@ -408,7 +408,7 @@ By limiting and targeting the concurrency to 1 and setting the max scale 10, the
 
 ## A/B Testing or Blue/Green Deployment
 
-In situation when you want to experiment with different working versions of your functions, Knative supports the ability to setup your service deployment with traffic splitting. This allows some percentage of requests to a service to be routed to a specific version and some other percentage to another. This in effect allows you to [A/B test](https://en.wikipedia.org/wiki/A/B_testing) or [Blue/Green deployment](https://martinfowler.com/bliki/BlueGreenDeployment.html) between revisions.
+In situation when you want to experiment with different working versions of your functions, Knative supports the ability to setup your service deployment with traffic splitting. This allows some percentage of requests to a service to be routed to a specific version and some other percentage to another. This in effect allows you to [A/B test](https://en.wikipedia.org/wiki/A/B_testing) or [Blue/Green deploy](https://martinfowler.com/bliki/BlueGreenDeployment.html) between revisions.
 
 The Knative client `kn` has commands to help you configure traffic splitting on any of your services and their revisions easily. Let's explore one example with the `summary-fn` service. In the default implementation, the requests to `twitter-fn` and `watson-fn` are serialized. This results in slow responses in rendering the UI and therefore a suboptimal experience for end users. A better one would be to make the calls to `watson-fn` services asynchronous and populate the image classifications and the tag cloud dynamically as they become available.
 

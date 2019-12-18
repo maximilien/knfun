@@ -404,17 +404,17 @@ Service 'watson-fn' updated with latest revision 'watson-fn-gmdxr-7' and URL:
 http://watson-fn.default.knative-cluster.us-south.containers.cloud.ibm.com
 ```
 
-By limiting and targeting the concurrency to 1 and setting the max scale 10, the *WatsonFn* will start with 1 replica and autoscale up to 10 replicas as requests comes in while each replica will be allowed to only process one request at a time.
+By limiting and targeting the concurrency to 1 and setting the max scale to 10, the *WatsonFn* will start with 1 replica and autoscale up to 10 replicas as requests comes in while each replica will be allowed to only process one request at a time.
 
 ## A/B Testing or Blue/Green Deployment
 
 In situation when you want to experiment with different working versions of your functions, Knative supports the ability to setup your service deployment with traffic splitting. This allows some percentage of requests to a service to be routed to a specific version and some other percentage to another. This in effect allows you to [A/B test](https://en.wikipedia.org/wiki/A/B_testing) or [Blue/Green deploy](https://martinfowler.com/bliki/BlueGreenDeployment.html) between revisions.
 
-The Knative client `kn` has commands to help you configure traffic splitting on any of your services and their revisions easily. Let's explore one example with the `summary-fn` service. In the default implementation, the requests to `twitter-fn` and `watson-fn` are serialized. This results in slow responses in rendering the UI and therefore a suboptimal experience for end users. A better one would be to make the calls to `watson-fn` services asynchronous and populate the image classifications and the tag cloud dynamically as they become available.
+The Knative client `kn` has commands to help you configure traffic splitting easily on any of your services and their revisions. Let's explore one example with the `summary-fn` service. In the default implementation, the requests to `twitter-fn` and `watson-fn` are serialized. This results in slow responses in rendering the UI and therefore a suboptimal experience for end users. A better one would be to make the calls to `watson-fn` services asynchronous and populate the image classifications and the tag cloud dynamically as they become available.
 
 ### Tagging Stable Revisions
 
-However, let's first tag the current revision as `stable`. We do this by listing the revisions for `summary-fn` and tagging the latest one. We first need to find the revision name for the current stable one.
+However, let's first tag the current revision as `stable`. We do this by listing the revisions for `summary-fn` and tagging the latest one. We first need to find the revision name for the current (latest) and stable one.
 
 ```bash
 kn revision list -s summary-fn
@@ -423,7 +423,7 @@ summary-fn-tcthz-1   summary-fn   8            10h   4 OK / 4     True
 summary-fn-lljhz-1   summary-fn   7            20h   3 OK / 4     True
 ```
 
-We can notice that the revision listed at the top is the most current revision with generation number 8. It is also ready and have name `summary-fn-tcthz-1`. We can use the name to tag it as `latest`, `sync`, and `stable`.
+We can notice that the revision listed at the top is the most current revision with generation number 8. It is also ready and has name `summary-fn-tcthz-1`. We can use the name to tag it as `latest`, `sync`, and `stable`.
 
 ```bash
 kn service update summary-fn --tag summary-fn-tcthz-1=latest \
@@ -440,7 +440,7 @@ http://summary-fn-default.kndemo-267179.sjc03.containers.appdomain.cloud
 
 ### Deploy New Async Revision
 
-The branch [`summary-fn-async`](https://github.com/maximilien/knfun/tree/summary-fn-async) has one such implemenation. The main change in that branch is that the `summary-fn` service root `\` now points to the async handler so that when users hit the `summary-fn` endpoint they will be using the async implementation of the UI that uses [jQuery](https://jquery.com/) to call the `watson-fn` function vs doing so in a sync fashion in the stable revision. A brief summary of the changes are in the following files.
+Next step is to deploy a better, faster, async version of the `summary-fn` service. The branch [`summary-fn-async`](https://github.com/maximilien/knfun/tree/summary-fn-async) has one such implemenation. The primary change in that branch is in the `summary-fn` service root `/` now points to the new async handler so that when users hit the `summary-fn` endpoint they will be using the async implementation of the UI that make use [jQuery](https://jquery.com/) to call the `watson-fn` function versus doing so in a synchronous fashion, as in the stable (or sync) revision. A brief summary of the changes are in the following files.
 
 ```golang
 cat ./funcs/summary/cmds.go
@@ -451,7 +451,7 @@ func (summaryFn *SummaryFn) summary(cmd *cobra.Command, args []string) error {
 ...
 ```
 
-The other change is in the file `./funcs/summary/async_layout.html` which is now used to render the `summary-fn` UI. In there the main change is to call the `watson-fn` function via jQuery.
+The other change is in the file `./funcs/summary/async_layout.html` which is now used to render the `summary-fn` UI. In there the primary change is to call the `watson-fn` function via jQuery.
 
 ```javascript
 ...
@@ -471,7 +471,7 @@ The other change is in the file `./funcs/summary/async_layout.html` which is now
 ...
 ```
 
-If you checkout that branch and build the `summary-fn` with the code in that branch and then create an updated Docker image for the `SummaryFn` service and push it to `docker.io`.
+Next you will need checkout that branch and build the `summary-fn` function with the code in that branch; and then create an updated Docker image for the `SummaryFn` service; and push it to `docker.io`.
 
 ```bash
 git co summary-fn-async
@@ -498,7 +498,7 @@ The push refers to repository [docker.io/drmax/summary-fn]
 ...
 ```
 
-Now let's now deploy the new `async` revision and tag it as such.
+Next, let's deploy the new `async` revision and tag it as such.
 
 ```bash
 kn service update summary-fn \
@@ -563,15 +563,15 @@ Service 'summary-fn' updated with latest revision 'summary-fn-jtpyt-1' (unchange
 http://summary-fn-default.kndemo-267179.sjc03.containers.appdomain.cloud
 ```
 
-Now when users access the URL for the `summary-fn` function they will (on average) see 50% the sync page (which takes a few seconds to reder) and 50% the async version which is instantaneous and asynchronously shows the tag cloud for the image features.
+Now when users access the URL for the `summary-fn` function they will (on average) see 50% the sync page (which takes a few seconds to reder) and 50% the async version which is instantaneous and asynchronously shows image features and the tag cloud of all the images features.
 
 # Next steps
 
 This initial demo was [presented](docs/kubecon-2019-sandiego.pdf) at the IBM mini-theater at KubeCon San Diego on Thursday November 21st, 2019. Additionally, there are two immediate next steps I would like to see for v2 of this demo:
 
-1. Improve the UI output for the `SummaryFn`. In particular making it more dynamic and usable for live demos.
-2. Use Knative's eventing to refresh the `SummaryFn` page automatically when new tweets are available. This assumes a Twitter API Knative importer and broker is available.
+1. Improve the UI of the `SummaryFn`. In particular making it more dynamic and usable for live demos. For example having a table view in addition to the list view it currently shows.
+2. Use Knative's eventing to refresh the `SummaryFn` page automatically when new tweets are available. This assumes a Knative Twitter API event importer and broker is available to use.
 
 # Participate
 
-We welcome your feedback as [issues](https://github.com/maximilien/knfun/issues) and [pull requests](https://github.com/maximilien/knfun/pulls). Feel free to reuse this in your own demos. [Contact me](mailto:maxim@us.ibm.com?subject=[KnFun]demo%20links) if you do so I can list recordings and presentations.
+I welcome your feedback as [issues](https://github.com/maximilien/knfun/issues) and [pull requests](https://github.com/maximilien/knfun/pulls). Feel free to also reuse this in your own demos. [Contact me with links](mailto:maxim@us.ibm.com?subject=[KnFun]demo%20links) if you do so I can list them.

@@ -24,7 +24,9 @@ To run this function as a server and see JSON output on your browser or with cur
 			 --twitter-access-token-secret $TWITTER_ACCESS_TOKEN_SECRET
 ```
 
-Then open your browser at `http://localhost:8080` or do `curl http://localhost:8080`. You can then `CTRL-C` to stop the server.
+Then open your browser at `http://localhost:8080` or do `curl http://localhost:8080`. You can then `CTRL-C` to stop the server. 
+
+You can change the input at the browser by passing the query parameter `q` and make it equal the value to search for. For example: `http://localhost:8080?q=NFL&o=json`. If you change the `-o` value to `text` then the Twitter search results will display as formatted text.
 
 To see what other options are available for the `twitter-fn` `search` function get the CLI help with: `./twitter-fn search --help` or `./twitter-fn search -h`.
 
@@ -39,16 +41,19 @@ Similarly for the `watson-fn` function you can test it locally with any image fo
 			   --watson-api-version $WATSON_API_VERSION
 ```
 
-To run this as a server and see JSON output on your browser or with curl, do the following:
+To run this as a local server and see JSON output on your browser or with `curl`, do the following:
 
 ```bash
-./watson-fn vr classify https://upload.wikimedia.org/wikipedia/commons/c/c3/Jordan_by_Lipofsky_16577.jpg -o json -p 8081 \
+./watson-fn vr classify https://upload.wikimedia.org/wikipedia/commons/c/c3/Jordan_by_Lipofsky_16577.jpg -o json -S -p 8081 \
 			   --watson-api-key $WATSON_API_KEY \
 			   --watson-api-url $WATSON_API_URL \
-			   --watson-api-version $WATSON_API_VERSION
+			   --watson-api-version $WATSON_API_VERSION &
+...
+# curl the local server to classify an image
+curl http://localhost:8081?q=https://upload.wikimedia.org/wikipedia/commons/c/c3/Jordan_by_Lipofsky_16577.jpg&o=json
 ```
 
-You can change the input at the browser by passing the URL with the `q` or `query` URL paramter. For example: `http://localhjost:8081?q=http://pbs.twimg.com/media/EHpWVAvWoAEfVzO.jpg&o=json`. If you change the `-o` value to `text` then the image classification will display as formatted text.
+You can change the input at the browser by passing the URL with the `q` or `query` URL parameter. For example: `http://localhost:8081?q=http://pbs.twimg.com/media/EHpWVAvWoAEfVzO.jpg&o=json`. If you change the `-o` value to `text` then the image classification will display as formatted text.
 
 ## summary-fn
 
@@ -60,7 +65,7 @@ Finally, you can test the `summary-fn` function locally after running the `twitt
 	     --watson-fn-url http://localhost:8081
 ```
 
-To run `summary-fn` as a server and see output on your browser or with curl, do the following:
+To run `summary-fn` as a local server and see output on your browser or with curl, do the following:
 
 ```bash
 ./summary-fn NBA -o text -c 10 -o text -S -p 8082 \
@@ -68,7 +73,7 @@ To run `summary-fn` as a server and see output on your browser or with curl, do 
              --watson-fn-url http://localhost:8081
 ```
 
-Open your browser at `http://localhost:8082` or `curl http://localhost:8082`
+Open your browser at `http://localhost:8082` or `curl http://localhost:8082` to see output at the terminal.
 
 ## Credentials config
 

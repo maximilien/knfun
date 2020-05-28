@@ -2,8 +2,8 @@
 
 This demo was presented at the following dates and venues:
 
-* IBM mini-theater at KubeCon San Diego on Thursday November 21st, 2019 [slides](docs/kubecon-2019-sandiego.pdf)
-* IBM User Group Days online on May 201th, 2020 ([free registration](https://ibm-ugd-platform.bemyapp.com/#/event) required) [slides](docs/ibm-user-group-days-2020-online.pdf)[video](https://ibm-ugd-platform.bemyapp.com/#/conference/5eb1d06bfe3f0f001be7e3c4)
+* IBM mini-theater at [KubeCon'19 San Diego](https://events19.linuxfoundation.org/events/kubecon-cloudnativecon-north-america-2019/) on Thursday November 21st, 2019 [slides](docs/kubecon-2019-sandiego.pdf)
+* [IBM User Group Days](https://ibm-ugd-platform.bemyapp.com/#/event) online on May 201th, 2020 ([free registration](https://ibm-ugd-platform.bemyapp.com/#/event) required) [slides](docs/ibm-user-group-days-2020-online.pdf)|[video](https://ibm-ugd-platform.bemyapp.com/#/conference/5eb1d06bfe3f0f001be7e3c4)
 
 ## Next steps
 

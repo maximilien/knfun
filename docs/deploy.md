@@ -47,6 +47,6 @@ You can use these images to deploy the functions into your Knative cluster with 
 
 You are welcome to use my images at:
 
-1. ``docker.io/drmax/twitter-fn:latest`
+1. `docker.io/drmax/twitter-fn:latest`
 2. `docker.io/drmax/watson-fn:latest`
 3. `docker.io/drmax/summary-fn:latest`

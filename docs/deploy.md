@@ -43,4 +43,10 @@ Your images should not be avaible at:
 2. `docker.io/${DOCKER_USERNAME}/watson-fn`
 3. `docker.io/${DOCKER_USERNAME}/summary-fn`
 
-You can use these images to deploy the functions into your Knative cluster with the `kn` CLI.
+You can use these images to deploy the functions into your Knative cluster with the `kn` CLI. 
+
+You are welcome to use my images at:
+
+1. ``docker.io/drmax/twitter-fn:latest`
+2. `docker.io/drmax/watson-fn:latest`
+3. `docker.io/drmax/summary-fn:latest`

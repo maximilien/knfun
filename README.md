@@ -40,6 +40,7 @@ Table of Contents
 	* [Credentials Config](docs/test.md/#credentials-config)
 	* [e2e](docs/test.md/#e2e)
   * [Deploy](docs/deploy.md)
+  * [Debug](docs/debug.md)
   * [Run](docs/run.md)
    	* [TwitterFn](docs/run.md/#TwitterFn)
 	* [WatsonFn](docs/run.md/#WatsonFn)

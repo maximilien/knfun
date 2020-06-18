@@ -1,10 +1,15 @@
 # Deploy
 
-In order to deploy into a Knative cluster, you must first create images and publish them into a repository. We will be using Docker for that purpose. 
+In order to deploy into a Knative cluster, you must first create images and
+publish them into a repository. We will be using Docker for that purpose.
 
-The `./hack/build.sh --docker-images` and `./hack/build.sh --docker-push` will respectively create Docker images and push them in your [Docker Hub](https://docker.io) account for you. Or use `--docker` to both build and push the images at once.
+The `./hack/build.sh --docker-images` and `./hack/build.sh --docker-push` will
+respectively create Docker images and push them in your
+[Docker Hub](https://docker.io) account for you. Or use `--docker` to both build
+and push the images at once.
 
-You need to make sure the `docker` executable is visible to your shell and that the environment variable `DOCKER_USERNAME` is set to your Docker Hub user ID.
+You need to make sure the `docker` executable is visible to your shell and that
+the environment variable `DOCKER_USERNAME` is set to your Docker Hub user ID.
 
 ```bash
 ./hack/build.sh --docker-images
@@ -43,7 +48,8 @@ Your images should not be avaible at:
 2. `docker.io/${DOCKER_USERNAME}/watson-fn`
 3. `docker.io/${DOCKER_USERNAME}/summary-fn`
 
-You can use these images to deploy the functions into your Knative cluster with the `kn` CLI. 
+You can use these images to deploy the functions into your Knative cluster with
+the `kn` CLI.
 
 You are welcome to use my images at:
 

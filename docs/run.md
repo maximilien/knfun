@@ -127,7 +127,8 @@ In situation when you want to experiment with different working versions of your
 functions, Knative supports the ability to setup your service deployment with
 traffic splitting. This allows some percentage of requests to a service to be
 routed to a specific version and some other percentage to another. This in
-effect allows you to [A/B test](https://en.wikipedia.org/wiki/A/B_testing) or
+effect allows you to deploy your service to implement some  
+[A/B test](https://en.wikipedia.org/wiki/A/B_testing) or do a
 [Blue/Green deploy](https://martinfowler.com/bliki/BlueGreenDeployment.html)
 between revisions.
 

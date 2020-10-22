@@ -1,0 +1,23 @@
+repo:
+  - ./*
+  
+@funcs/twitter:
+  - funcs/twitter/*
+
+@funcs/watson:
+  - funcs/watson/*
+
+@funcs/summary:
+  - funcs/summary/*
+
+@funcs/common:
+  - funcs/common/*
+
+test:
+  - test/**/*
+
+source:
+- any: ['funcs/**/*', '!funcs/docs/*']
+
+docs:
+  - docs/**/*

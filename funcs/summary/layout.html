@@ -34,12 +34,10 @@ $(document).ready(function() {
         <div>
             {{range $j, $ClassifiedImage := $cTweet.ClassifiedImages}}
             	<div id="{{$i}}_{{$j}}">
-            		<img src="{{$ClassifiedImage.ResolvedURL}}">
+            		<img src="{{$ClassifiedImage.ImageURL}}">
             	</div>
     	        <div>
-    	        	{{range $ClassifiedImage.Classifiers}}
-    	        	<div>
-    		        	{{range .Classes}}
+    	        	{{range $ClassifiedImage.Labels}}
     		        		<div>{{.Name}} ({{.Score}})
                             <script type="text/javascript">
                                 words.push({text:"{{.Name}}", 
@@ -47,9 +45,8 @@ $(document).ready(function() {
                                             link:"#{{$i}}_{{$j}}"})
                             </script>
                             </div> 
-    		        	{{end}}
+    		        {{end}}
     		        </div>
-    	        	{{end}}
     	        </div>
             {{end}}
             <div>{{.Text}}</div>

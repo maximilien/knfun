@@ -41,21 +41,13 @@ type Tweet struct {
 }
 
 type ClassifiedImage struct {
-	SourceURL   string       `json:"source_url"`
-	ResolvedURL string       `json:"resolved_url"`
-	Classifiers []Classifier `json:"classifiers"`
+	ImageURL string  `json:"ImageURL"`
+	Labels   []Label `json:"labels"`
 }
 
-type Classifier struct {
-	Name         string  `json:"name"`
-	ClassifierID string  `json:"classifier_id"`
-	Classes      []Class `json:"classes"`
-}
-
-type Class struct {
-	Name          string  `json:"class"`
-	Score         float32 `json:"score"`
-	TypeHierarchy string  `json:"type_hierarchy,omitempty"`
+type Label struct {
+	Name  string  `json:"name"`
+	Score float32 `json:"score"`
 }
 
 type SummaryFn struct {
@@ -240,6 +232,8 @@ func classifyImage(watsonFnURL string, imageURL string, timeout int) (Classified
 		return ClassifiedImage{}, err
 	}
 
+	fmt.Println(string(body[:])) //DEBUG
+
 	classifiedImage := ClassifiedImage{}
 	err = json.Unmarshal(body, &classifiedImage)
 	if err != nil {
@@ -255,12 +249,9 @@ func (cTweet ClassifiedTweet) ToText() string {
 	sb := bytes.NewBufferString("")
 	sb.WriteString(fmt.Sprintf("\n🐦 %s\n", cTweet.Text))
 	for i, cImage := range cTweet.ClassifiedImages {
-		sb.WriteString(fmt.Sprintf("\n%d.  📸 URL: `%s`\n", i, cImage.ResolvedURL))
-		for _, classifier := range cImage.Classifiers {
-			sb.WriteString(fmt.Sprintf("\n%d.  📚 classifier: `%s`\n", i, classifier.Name))
-			for _, class := range classifier.Classes {
-				sb.WriteString(fmt.Sprintf("\n.   📸 is a `%s` with `%1.3f` confidence\n", class.Name, class.Score))
-			}
+		sb.WriteString(fmt.Sprintf("\n%d.  📸 URL: `%s`\n", i, cImage.ImageURL))
+		for _, label := range cImage.Labels {
+			sb.WriteString(fmt.Sprintf("\n.   📸 is a `%s` with `%1.3f` confidence\n", label.Name, label.Score))
 			sb.WriteString("------\n")
 		}
 	}

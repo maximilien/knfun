@@ -45,6 +45,8 @@ type ClassifyImageData struct {
 type DetectLabelsFn struct {
 	common.CommonFn
 
+	client *vision.ImageAnnotatorClient
+
 	ImageURL string
 
 	keys keys
@@ -60,11 +62,14 @@ func (detectLabelsFn *DetectLabelsFn) ClassifyImage() (ClassifyImageData, error)
 		}
 	}
 
-	client, err := vision.NewImageAnnotatorClient(ctx)
-	if err != nil {
-		return ClassifyImageData{}, fmt.Errorf("error creating client: %s", err.Error())
+	var err error
+	if detectLabelsFn.client == nil {
+		gVisionClient, err := vision.NewImageAnnotatorClient(ctx)
+		if err != nil {
+			return ClassifyImageData{}, fmt.Errorf("error creating client: %s", err.Error())
+		}
+		detectLabelsFn.client = gVisionClient
 	}
-	defer client.Close()
 
 	filepath := detectLabelsFn.ImageURL
 	if strings.HasPrefix(detectLabelsFn.ImageURL, "http") {
@@ -86,7 +91,7 @@ func (detectLabelsFn *DetectLabelsFn) ClassifyImage() (ClassifyImageData, error)
 		return ClassifyImageData{}, fmt.Errorf("error reading image: %s", err.Error())
 	}
 
-	labels, err := client.DetectLabels(ctx, image, nil, 10)
+	labels, err := detectLabelsFn.client.DetectLabels(ctx, image, nil, 10)
 	if err != nil {
 		return ClassifyImageData{}, fmt.Errorf("error detecting labels for image: %s", err.Error())
 	}

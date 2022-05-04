@@ -42,10 +42,9 @@ $(document).ready(function() {
                    <script type="text/javascript">
                     $(document).ready(function() {
                         $.get( "{{ $WatsonFnURL }}?q={{ $imageURL }}", function( data ) {
-                          data.classifiers.forEach(function(c){
-                            c.classes.forEach(function(b) {
-                                $("#tw{{$i}}_{{$j}}").append("<div>"+b["class"]+" "+b.score+"</div>");
-                                words.push({text: b["class"], 
+                            data.labels.forEach(function(b) {
+                                $("#tw{{$i}}_{{$j}}").append("<div>"+b.name+" "+b.score+"</div>");
+                                words.push({text: b.name, 
                                             weight: b.score*1000, 
                                             link: "#tw{{$i}}_{{$j}}"})
                             });

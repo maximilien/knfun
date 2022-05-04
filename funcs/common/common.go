@@ -18,6 +18,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"os"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -59,4 +63,31 @@ func Flatten(in interface{}, output string, toText ToTextFunc) string {
 		outputData = toText(in)
 	}
 	return outputData
+}
+
+func DownloadTmpFile(url string) (string, error) {
+	file, err := ioutil.TempFile("", "knfun")
+	if err != nil {
+		return "", err
+	}
+
+	err = DownloadFile(file.Name(), url)
+	return file.Name(), err
+}
+
+func DownloadFile(filepath string, url string) error {
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	out, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, resp.Body)
+	return err
 }

@@ -21,6 +21,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/maximilien/knfun/funcs/common"
 
@@ -65,11 +66,21 @@ func (detectLabelsFn *DetectLabelsFn) ClassifyImage() (ClassifyImageData, error)
 	}
 	defer client.Close()
 
-	file, err := os.Open(detectLabelsFn.ImageURL)
+	filepath := detectLabelsFn.ImageURL
+	if strings.HasPrefix(detectLabelsFn.ImageURL, "http") {
+		filepath, err = common.DownloadTmpFile(detectLabelsFn.ImageURL)
+		if err != nil {
+			return ClassifyImageData{}, fmt.Errorf("error creating tmp file for image: %s", err.Error())
+		}
+	}
+
+	file, err := os.Open(filepath)
 	if err != nil {
 		return ClassifyImageData{}, fmt.Errorf("error loading image: %s", err.Error())
 	}
 	defer file.Close()
+	defer os.Remove(filepath)
+
 	image, err := vision.NewImageFromReader(file)
 	if err != nil {
 		return ClassifyImageData{}, fmt.Errorf("error reading image: %s", err.Error())

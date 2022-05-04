@@ -8,6 +8,7 @@
 main
 twitter-fn
 watson-fn
+gvision-fn
 summary-fn
 .knfun*
 

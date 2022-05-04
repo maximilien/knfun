@@ -144,6 +144,9 @@ docker_build_images() {
   echo "   🚧 🐳 watson-fn"
   docker build -f ./funcs/watson/Dockerfile -t ${DOCKER_USERNAME}/watson-fn .
 
+  echo "   🚧 🐳 gvision-fn"
+  docker build -f ./funcs/gvision/Dockerfile -t ${DOCKER_USERNAME}/gvision-fn .
+
   echo "   🚧 🐳 summary-fn"
   docker build -f ./funcs/summary/Dockerfile -t ${DOCKER_USERNAME}/summary-fn .
 }
@@ -156,6 +159,9 @@ docker_push_images() {
 
   echo "   🐳 watson-fn"
   docker push ${DOCKER_USERNAME}/watson-fn
+
+  echo "   🐳 gvision-fn"
+  docker push ${DOCKER_USERNAME}/gvision-fn
 
   echo "   🐳 summary-fn"
   docker push ${DOCKER_USERNAME}/summary-fn
@@ -188,6 +194,7 @@ go_build() {
   echo "🚧 Compile"
   go build -mod=vendor -ldflags "$(build_flags $(basedir))" -o twitter-fn ./funcs/twitter/...
   go build -mod=vendor -ldflags "$(build_flags $(basedir))" -o watson-fn ./funcs/watson/...
+  go build -mod=vendor -ldflags "$(build_flags $(basedir))" -o gvision-fn ./funcs/gvision/...
   go build -mod=vendor -ldflags "$(build_flags $(basedir))" -o summary-fn ./funcs/summary/...
 }
 

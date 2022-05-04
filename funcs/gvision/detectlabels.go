@@ -107,7 +107,7 @@ func (detectLabelsFn *DetectLabelsFn) ClassifyImage() (ClassifyImageData, error)
 
 func (detectLabelsFn *DetectLabelsFn) ClassifyHandler(writer http.ResponseWriter, request *http.Request) {
 	detectLabelsFn.initQueryParams(request)
-	log.Printf("WatsonFn.Classify: q=\"%s\", o=\"%s\"", detectLabelsFn.ImageURL, detectLabelsFn.Output)
+	log.Printf("GVisionFn.DetectLabels: q=\"%s\", o=\"%s\"", detectLabelsFn.ImageURL, detectLabelsFn.Output)
 
 	classifiedImageData, err := detectLabelsFn.ClassifyImage()
 	if err != nil {

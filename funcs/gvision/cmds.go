@@ -96,9 +96,9 @@ func (detectLabelsFn *DetectLabelsFn) detectLabels(cmd *cobra.Command, args []st
 }
 
 func (detectLabelsFn *DetectLabelsFn) addGVisionCmdFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVar(&detectLabelsFn.keys.gVisionAPIJSON, "watson-api-json", "", "watson API JSON")
+	cmd.PersistentFlags().StringVar(&detectLabelsFn.keys.gVisionAPIJSON, "gvision-api-json", "", "GVision API JSON")
 
-	viper.BindPFlag("watson-api-json", cmd.PersistentFlags().Lookup("watson-api-json"))
+	viper.BindPFlag("gvision-api-json", cmd.PersistentFlags().Lookup("gvision-api-json"))
 }
 
 func (detectLabelsFn *DetectLabelsFn) addDetectLabelsCmdFlags(cmd *cobra.Command) {
@@ -111,22 +111,14 @@ func (detectLabelsFn *DetectLabelsFn) initDetectLabelsCmdInputFlags(args []strin
 	}
 
 	if detectLabelsFn.ImageURL == "" {
-		return errors.New(fmt.Sprintf("You must pass an image URL to detect labels"))
+		return errors.New("you must pass an image URL to detect labels")
 	}
 
 	return nil
 }
 
 func (detectLabelsFn *DetectLabelsFn) initGVisionKeysFlags() {
-	// if detectLabelsFn.keys.watsonAPIKey == "" {
-	// 	detectLabelsFn.keys.watsonAPIKey = viper.GetString("watson-api-key")
-	// }
-
-	// if detectLabelsFn.keys.watsonAPIURL == "" {
-	// 	detectLabelsFn.keys.watsonAPIURL = viper.GetString("watson-api-url")
-	// }
-
-	// if detectLabelsFn.keys.watsonAPIVersion == "" {
-	// 	detectLabelsFn.keys.watsonAPIVersion = viper.GetString("watson-api-version")
-	// }
+	if detectLabelsFn.keys.gVisionAPIJSON == "" {
+		detectLabelsFn.keys.gVisionAPIJSON = viper.GetString("gvision-api-json")
+	}
 }

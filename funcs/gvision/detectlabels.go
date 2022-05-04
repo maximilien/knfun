@@ -16,18 +16,29 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/maximilien/knfun/funcs/common"
+
+	vision "cloud.google.com/go/vision/apiv1"
 )
 
 type keys struct {
 	gVisionAPIJSON string
 }
 
+type Label struct {
+	Name  string
+	Score float32
+}
+
 type ClassifyImageData struct {
+	ImageURL string
+	Labels   []Label
 }
 
 type DetectLabelsFn struct {
@@ -39,22 +50,48 @@ type DetectLabelsFn struct {
 }
 
 func (detectLabelsFn *DetectLabelsFn) ClassifyImage() (ClassifyImageData, error) {
-	// 	vr, err := detectLabelsFn.createWatsonClient()
-	// 	if err != nil {
-	// 		return ClassifyImageData{}, err
-	// 	}
+	ctx := context.Background()
 
-	// 	classifiedImages, _, err := vr.Classify(
-	// 		&vr3.ClassifyOptions{
-	// 			URL: core.StringPtr(detectLabelsFn.ImageURL),
-	// 		},
-	// 	)
-	// 	if err != nil {
-	// 		return ClassifyImageData{}, errors.New(fmt.Sprintf("Error classifying image: %s\n", err.Error()))
-	// 	}
+	if os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") == "" {
+		err := os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", detectLabelsFn.keys.gVisionAPIJSON)
+		if err != nil {
+			return ClassifyImageData{}, fmt.Errorf("error finding GOOGLE_APPLICATION_CREDENTIALS enviroment variable: %s", err.Error())
+		}
+	}
 
-	// 	return detectLabelsFn.collectClassifyImageData(classifiedImages), nil
-	return ClassifyImageData{}, nil
+	client, err := vision.NewImageAnnotatorClient(ctx)
+	if err != nil {
+		return ClassifyImageData{}, fmt.Errorf("error creating client: %s", err.Error())
+	}
+	defer client.Close()
+
+	file, err := os.Open(detectLabelsFn.ImageURL)
+	if err != nil {
+		return ClassifyImageData{}, fmt.Errorf("error loading image: %s", err.Error())
+	}
+	defer file.Close()
+	image, err := vision.NewImageFromReader(file)
+	if err != nil {
+		return ClassifyImageData{}, fmt.Errorf("error reading image: %s", err.Error())
+	}
+
+	labels, err := client.DetectLabels(ctx, image, nil, 10)
+	if err != nil {
+		return ClassifyImageData{}, fmt.Errorf("error detecting labels for image: %s", err.Error())
+	}
+
+	cImageData := ClassifyImageData{
+		ImageURL: detectLabelsFn.ImageURL,
+	}
+	for _, label := range labels {
+		l := Label{
+			Name:  label.Description,
+			Score: label.Score,
+		}
+		cImageData.Labels = append(cImageData.Labels, l)
+	}
+
+	return cImageData, nil
 }
 
 func (detectLabelsFn *DetectLabelsFn) ClassifyHandler(writer http.ResponseWriter, request *http.Request) {
@@ -63,7 +100,7 @@ func (detectLabelsFn *DetectLabelsFn) ClassifyHandler(writer http.ResponseWriter
 
 	classifiedImageData, err := detectLabelsFn.ClassifyImage()
 	if err != nil {
-		log.Printf(err.Error())
+		log.Print(err.Error())
 		return
 	}
 
@@ -77,55 +114,22 @@ func (detectLabelsFn *DetectLabelsFn) ClassifyHandler(writer http.ResponseWriter
 // Private classifyImageFn
 
 func (classifyImageFn *DetectLabelsFn) initQueryParams(request *http.Request) {
-	// 	detectLabelsFn.ImageURL = classifyImageFn.ExtractQueryStringParam(request, []string{"query", "q", "image-url", "u"}, classifyImageFn.ImageURL)
-	// 	detectLabelsFn.Output = classifyImageFn.ExtractQueryStringParam(request, []string{"o", "output"}, classifyImageFn.Output)
+	detectLabelsFn.ImageURL = classifyImageFn.ExtractQueryStringParam(request, []string{"query", "q", "image-url", "u"}, classifyImageFn.ImageURL)
+	detectLabelsFn.Output = classifyImageFn.ExtractQueryStringParam(request, []string{"o", "output"}, classifyImageFn.Output)
 }
-
-// func (detectLabelsFn *ClassifyImageFn) createWatsonClient() (*vr3.VisualRecognitionV3, error) {
-// 	return vr3.NewVisualRecognitionV3(&vr3.VisualRecognitionV3Options{
-// 		URL:     detectLabelsFn.keys.watsonAPIURL,
-// 		Version: detectLabelsFn.keys.watsonAPIVersion,
-// 		Authenticator: &core.IamAuthenticator{
-// 			ApiKey: detectLabelsFn.keys.watsonAPIKey,
-// 		},
-// 	})
-// }
-
-// func (detectLabelsFn *ClassifyImageFn) collectClassifyImageData(classifiedImages *vr3.ClassifiedImages) ClassifyImageData {
-// 	cIData := ClassifyImageData{}
-// 	if *classifiedImages.ImagesProcessed >= 1 {
-// 		cIData.ClassifiedImage = classifiedImages.Images[0]
-// 		cIData.Warnings = classifiedImages.Warnings
-// 	}
-
-// 	return cIData
-// }
 
 // Public ClassifyImageData
 
 func (cIData ClassifyImageData) ToText(in interface{}) string {
 	sb := bytes.NewBufferString("")
 
-	// 	sb.WriteString(fmt.Sprintf("source URL: %s\n", *cIData.ClassifiedImage.SourceURL))
-	// 	sb.WriteString(fmt.Sprintf("resolved URL: %s\n", *cIData.ClassifiedImage.ResolvedURL))
-	// 	for _, classifier := range cIData.ClassifiedImage.Classifiers {
-	// 		sb.WriteString("----\n")
-	// 		sb.WriteString(fmt.Sprintf("name: %s\n", *classifier.Name))
-	// 		sb.WriteString(fmt.Sprintf("ID: %s\n", *classifier.ClassifierID))
-	// 		for _, class := range classifier.Classes {
-	// 			if class.Class != nil {
-	// 				sb.WriteString(fmt.Sprintf("- class: %s\n", *class.Class))
-	// 			}
-	// 			if class.Score != nil {
-	// 				sb.WriteString(fmt.Sprintf("- score: %1.3f\n", *class.Score))
-	// 			}
-	// 			if class.TypeHierarchy != nil {
-	// 				sb.WriteString(fmt.Sprintf("- type hierarchy: %s\n", *class.TypeHierarchy))
-	// 			}
-	// 			sb.WriteString("-\n")
-	// 		}
-	// 		sb.WriteString("----\n")
-	// 	}
+	sb.WriteString(fmt.Sprintf("image URL: %s\n", cIData.ImageURL))
+	sb.WriteString("----\n")
+	for _, label := range cIData.Labels {
+		sb.WriteString(fmt.Sprintf("name: %s\n", label.Name))
+		sb.WriteString(fmt.Sprintf("score: %f2\n", label.Score))
+	}
+	sb.WriteString("----\n")
 
 	return sb.String()
 }

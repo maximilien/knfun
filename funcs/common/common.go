@@ -27,7 +27,7 @@ type ToTextFunc = func(in interface{}) string
 func ToYAML(in interface{}) string {
 	yData, err := yaml.Marshal(in)
 	if err != nil {
-		panic("Error YAML marshalling Data")
+		panic("error YAML marshalling Data")
 	}
 	return string(yData)
 }
@@ -35,7 +35,7 @@ func ToYAML(in interface{}) string {
 func ToJSON(in interface{}) string {
 	jData, err := json.MarshalIndent(in, "", "  ")
 	if err != nil {
-		panic("Error JSON marshalling Data")
+		panic("error JSON marshalling Data")
 	}
 	return string(jData)
 }

@@ -47,7 +47,7 @@ func (commonFn *CommonFn) ExtractQueryIntParams(request *http.Request, paramName
 		if query.Get(paramName) != "" {
 			intValue, err := strconv.Atoi(query.Get(paramName))
 			if err != nil {
-				log.Printf(fmt.Sprintf("`%s` query parameter value is invalid '%s'!", paramName, err.Error()))
+				log.Print(fmt.Sprintf("`%s` query parameter value is invalid '%s'!", paramName, err.Error()))
 			}
 			valueMap[paramName] = intValue
 		}
@@ -76,7 +76,7 @@ func (commonFn *CommonFn) ExtractQueryIntParam(request *http.Request, paramNames
 		if query.Get(paramName) != "" {
 			iValue, err := strconv.Atoi(query.Get(paramName))
 			if err != nil {
-				log.Printf(fmt.Sprintf("`%s` query parameter value is invalid '%s'!", paramName, err.Error()))
+				log.Print(fmt.Sprintf("`%s` query parameter value is invalid '%s'!", paramName, err.Error()))
 			}
 			intValue = iValue
 			break

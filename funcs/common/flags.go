@@ -56,7 +56,7 @@ func (commonFn *CommonFn) InitCommonInputFlags(args []string) error {
 	}
 
 	if commonFn.SearchString == "" {
-		return errors.New(fmt.Sprintf("You must pass a search string"))
+		return errors.New("you must pass a search string")
 	}
 
 	return nil

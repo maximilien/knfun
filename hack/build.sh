@@ -17,7 +17,7 @@
 set -o pipefail
 
 source_dirs="funcs"
-docker_username=${DOCKER_USERNAME:-}
+username=${USERNAME:-}
 knfun_config=$HOME/.knfun.yaml
 
 # Store for later
@@ -82,34 +82,36 @@ run() {
     exit 0
   fi
 
-  # Run docker-images and docker-push
-  if $(has_flag --docker); then
-    if [[ -z "${docker_username}" ]]; then
-      echo "Please set environment variable DOCKER_USERNAME"
+  # Run images and push
+  if $(has_flag --docker -d); then
+    if [[ -z "${username}" ]]; then
+      echo "Please set environment variable USERNAME with your container registry username, e.g., Docker or GH"
       exit 1
     fi
-    docker_build_images
-    docker_push_images
+    login
+    build_images
+    push_images
     exit 0
   fi
 
-  # Run only docker-images
-  if $(has_flag --docker-images -d); then
-    if [[ -z "${docker_username}" ]]; then
-      echo "Please set environment variable DOCKER_USERNAME"
+  # Run only images
+  if $(has_flag --images -i); then
+    if [[ -z "${username}" ]]; then
+      echo "Please set environment variable USERNAME with your container registry username, e.g., Docker or GH"
       exit 1
     fi
-    docker_build_images
+    build_images
     exit 0
   fi
 
-  # Run only docker-push
-  if $(has_flag --docker-push); then
-    if [[ -z "${docker_username}" ]]; then
-      echo "Please set environment variable DOCKER_USERNAME"
+  # Run only push
+  if $(has_flag --push -p); then
+    if [[ -z "${username}" ]]; then
+      echo "Please set environment variable USERNAME with your container registry username, e.g., Docker or GH"
       exit 1
     fi
-    docker_push_images
+    login
+    push_images
     exit 0
   fi
 
@@ -135,36 +137,44 @@ codegen() {
   generate_docs
 }
 
-docker_build_images() {
+login() {
+    if [[ -z "${CR_PAT}" ]]; then
+      echo "Please set your personal access token for the container registry in environment CR_PAT, e.g., Docker or GH"
+      exit 1
+    fi
+  echo $CR_PAT | docker login ghcr.io -u $username --password-stdin
+}
+
+build_images() {
   echo "🚧 🐳 build images"
 
   echo "   🚧 🐳 twitter-fn"
-  docker build -f ./funcs/twitter/Dockerfile -t ${DOCKER_USERNAME}/twitter-fn .
+  docker build -f ./funcs/twitter/Dockerfile -t ghcr.io/${username}/twitter-fn .
 
   echo "   🚧 🐳 watson-fn"
-  docker build -f ./funcs/watson/Dockerfile -t ${DOCKER_USERNAME}/watson-fn .
+  docker build -f ./funcs/watson/Dockerfile -t ghcr.io/${username}/watson-fn .
 
   echo "   🚧 🐳 gvision-fn"
-  docker build -f ./funcs/gvision/Dockerfile -t ${DOCKER_USERNAME}/gvision-fn .
+  docker build -f ./funcs/gvision/Dockerfile -t ghcr.io/${username}/gvision-fn .
 
   echo "   🚧 🐳 summary-fn"
-  docker build -f ./funcs/summary/Dockerfile -t ${DOCKER_USERNAME}/summary-fn .
+  docker build -f ./funcs/summary/Dockerfile -t ghcr.io/${username}/summary-fn .
 }
 
-docker_push_images() {
+push_images() {
   echo "🐳 push images"
 
   echo "   🐳 twitter-fn"
-  docker push ${DOCKER_USERNAME}/twitter-fn
+  docker push ghcr.io/${username}/twitter-fn
 
   echo "   🐳 watson-fn"
-  docker push ${DOCKER_USERNAME}/watson-fn
+  docker push ghcr.io/${username}/watson-fn
 
   echo "   🐳 gvision-fn"
-  docker push ${DOCKER_USERNAME}/gvision-fn
+  docker push ${username}/gvision-fn
 
   echo "   🐳 summary-fn"
-  docker push ${DOCKER_USERNAME}/summary-fn
+  docker push ghcr.io/${username}/summary-fn
 }
 
 go_fmt() {
@@ -194,7 +204,7 @@ go_build() {
   echo "🚧 Compile"
   go build -mod=vendor -ldflags "$(build_flags $(basedir))" -o twitter-fn ./funcs/twitter/...
   go build -mod=vendor -ldflags "$(build_flags $(basedir))" -o watson-fn ./funcs/watson/...
-  go build -mod=vendor -ldflags "$(build_flags $(basedir))" -o gvision-fn ./funcs/gvision/...
+  # go build -mod=vendor -ldflags "$(build_flags $(basedir))" -o gvision-fn ./funcs/gvision/...
   go build -mod=vendor -ldflags "$(build_flags $(basedir))" -o summary-fn ./funcs/summary/...
 }
 

@@ -3,6 +3,9 @@
 # https://hub.docker.com/_/golang
 FROM golang:1.18
 
+ENV GOOS=linux 
+ENV GOARCH=amd64
+
 # Create and change to the app directory.
 WORKDIR /usr/src/app
 
@@ -15,7 +18,7 @@ RUN go mod download && go mod verify
 COPY . .
 
 # Build the binary.
-RUN go build -o /usr/local/twitter-fn ./funcs/twitter/...
+RUN go build -v -o /usr/local/twitter-fn ./funcs/twitter/...
 
 # Add start.sh
 ADD ./funcs/twitter/start.sh /

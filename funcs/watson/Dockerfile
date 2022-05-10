@@ -1,34 +1,28 @@
 # Use the official Golang image to create a build artifact.
 # This is based on Debian and sets the GOPATH to /go.
 # https://hub.docker.com/_/golang
-FROM golang:1.17 as builder
+FROM golang:1.18
+
+ENV GOOS=linux 
+ENV GOARCH=amd64
 
 # Create and change to the app directory.
-WORKDIR /app
+WORKDIR /usr/src/app
 
 # Retrieve application dependencies using go modules.
 # Allows container builds to reuse downloaded dependencies.
-COPY go.* ./
-RUN go mod download
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
 
 # Copy local code to the container image.
-COPY . ./
+COPY . .
 
 # Build the binary.
-# -mod=readonly ensures immutable go.mod and go.sum in container builds.
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -v -o watson-fn ./funcs/watson/...
+RUN go build -v -o /usr/local/watson-fn ./funcs/watson/...
 
-# Use the official Alpine image for a lean production container.
-# https://hub.docker.com/_/alpine
-# https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
-FROM alpine:3
-RUN apk add --no-cache ca-certificates
+# Add start.sh
+ADD ./funcs/watson/start.sh /
+RUN chmod +x /start.sh
 
-# Copy the binary to the production image from the builder stage.
-COPY --from=builder /app/watson-fn /watson-fn
-
-# Run the web service on container startup.
-CMD /watson-fn vr classify http://pbs.twimg.com/media/EHb34-KXYAESI46.jpg -o json -p 8080 -S \
-                --watson-api-key $WATSON_API_KEY \
-                --watson-api-url $WATSON_API_URL \
-                --watson-api-version $WATSON_API_VERSION
+# start it
+CMD ["/start.sh"]

@@ -171,7 +171,7 @@ push_images() {
   docker push ghcr.io/${username}/watson-fn
 
   echo "   🐳 gvision-fn"
-  docker push ${username}/gvision-fn
+  docker push ghcr.io/${username}/gvision-fn
 
   echo "   🐳 summary-fn"
   docker push ghcr.io/${username}/summary-fn

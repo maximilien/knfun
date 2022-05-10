@@ -173,16 +173,16 @@ build_images() {
   echo "🚧 🐳 build images"
 
   echo "   🚧 🐳 twitter-fn"
-  docker build --platform linux/amd64,linux/arm64 -f ./funcs/twitter/Dockerfile -t ${cr_url}/${username}/twitter-fn .
+  docker build --platform linux/amd64 -f ./funcs/twitter/Dockerfile -t ${cr_url}/${username}/twitter-fn .
 
   echo "   🚧 🐳 watson-fn"
-  docker build --platform linux/amd64,linux/arm64 -f ./funcs/watson/Dockerfile -t ${cr_url}/${username}/watson-fn .
+  docker build --platform linux/amd64 -f ./funcs/watson/Dockerfile -t ${cr_url}/${username}/watson-fn .
 
   echo "   🚧 🐳 gvision-fn"
-  docker build --platform linux/amd64,linux/arm64 -f ./funcs/gvision/Dockerfile -t ${cr_url}/${username}/gvision-fn .
+  docker build --platform linux/amd64 -f ./funcs/gvision/Dockerfile -t ${cr_url}/${username}/gvision-fn .
 
   echo "   🚧 🐳 summary-fn"
-  docker build --platform linux/amd64,linux/arm64 -f ./funcs/summary/Dockerfile -t ${cr_url}/${username}/summary-fn .
+  docker build --platform linux/amd64 -f ./funcs/summary/Dockerfile -t ${cr_url}/${username}/summary-fn .
 }
 
 push_images() {

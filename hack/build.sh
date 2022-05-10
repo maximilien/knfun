@@ -17,7 +17,11 @@
 set -o pipefail
 
 source_dirs="funcs"
+
 username=${USERNAME:-}
+cr_url=${CR_URL:-}
+cr_pat=${CR_PAT:-}
+
 knfun_config=$HOME/.knfun.yaml
 
 # Store for later
@@ -82,36 +86,32 @@ run() {
     exit 0
   fi
 
-  # Run images and push
+  # Run build images and push
   if $(has_flag --docker -d); then
-    if [[ -z "${username}" ]]; then
-      echo "Please set environment variable USERNAME with your container registry username, e.g., Docker or GH"
-      exit 1
-    fi
-    login
+    login_cr
     build_images
     push_images
     exit 0
   fi
 
-  # Run only images
+  # Run only build images
   if $(has_flag --images -i); then
-    if [[ -z "${username}" ]]; then
-      echo "Please set environment variable USERNAME with your container registry username, e.g., Docker or GH"
-      exit 1
-    fi
+    login_cr
     build_images
     exit 0
   fi
 
-  # Run only push
+  # Run only push images
   if $(has_flag --push -p); then
-    if [[ -z "${username}" ]]; then
-      echo "Please set environment variable USERNAME with your container registry username, e.g., Docker or GH"
-      exit 1
-    fi
-    login
+    login_cr
     push_images
+    exit 0
+  fi
+
+  # Run only scan images
+  if $(has_flag --scan -s); then
+    login_cr
+    scan_images
     exit 0
   fi
 
@@ -137,44 +137,84 @@ codegen() {
   generate_docs
 }
 
-login() {
-    if [[ -z "${CR_PAT}" ]]; then
-      echo "Please set your personal access token for the container registry in environment CR_PAT, e.g., Docker or GH"
-      exit 1
-    fi
-  echo $CR_PAT | docker login ghcr.io -u $username --password-stdin
+checks() {
+  check_username  
+  check_cr_url
+  check_cr_pat
+}
+
+check_username() {
+  if [[ -z "${username}" ]]; then
+    echo "Please set environment variable USERNAME with your container registry username, e.g., Docker or GH"
+    exit 1
+  fi
+}
+
+check_cr_url() {
+  if [[ -z "${cr_url}" ]]; then
+    echo "Please set environment variable CR_URL with your container registry URL of choice: docker.io or ghcr.io"
+    exit 1
+  fi
+}
+
+check_cr_pat() {
+  if [[ -z "${cr_pat}" ]]; then
+    echo "Please set environment variable CR_PAT with your container registry of choice personal access token"
+    exit 1
+  fi
+}
+
+login_cr() {
+  checks
+  echo ${cr_pat} | docker login ${cr_url} -u $username --password-stdin
 }
 
 build_images() {
   echo "🚧 🐳 build images"
 
   echo "   🚧 🐳 twitter-fn"
-  docker build -f ./funcs/twitter/Dockerfile -t ghcr.io/${username}/twitter-fn .
+  docker build -f ./funcs/twitter/Dockerfile -t ${cr_url}/${username}/twitter-fn .
 
   echo "   🚧 🐳 watson-fn"
-  docker build -f ./funcs/watson/Dockerfile -t ghcr.io/${username}/watson-fn .
+  docker build -f ./funcs/watson/Dockerfile -t ${cr_url}/${username}/watson-fn .
 
   echo "   🚧 🐳 gvision-fn"
-  docker build -f ./funcs/gvision/Dockerfile -t ghcr.io/${username}/gvision-fn .
+  docker build -f ./funcs/gvision/Dockerfile -t ${cr_url}/${username}/gvision-fn .
 
   echo "   🚧 🐳 summary-fn"
-  docker build -f ./funcs/summary/Dockerfile -t ghcr.io/${username}/summary-fn .
+  docker build -f ./funcs/summary/Dockerfile -t ${cr_url}/${username}/summary-fn .
 }
 
 push_images() {
-  echo "🐳 push images"
+  echo "📤 🐳 push images"
 
-  echo "   🐳 twitter-fn"
-  docker push ghcr.io/${username}/twitter-fn
+  echo "   📤 🐳 twitter-fn"
+  docker push ${cr_url}/${username}/twitter-fn
 
-  echo "   🐳 watson-fn"
-  docker push ghcr.io/${username}/watson-fn
+  echo "   📤 🐳 watson-fn"
+  docker push ${cr_url}/${username}/watson-fn
 
-  echo "   🐳 gvision-fn"
-  docker push ghcr.io/${username}/gvision-fn
+  echo "   📤 🐳 gvision-fn"
+  docker push ${cr_url}/${username}/gvision-fn
 
-  echo "   🐳 summary-fn"
-  docker push ghcr.io/${username}/summary-fn
+  echo "   📤 🐳 summary-fn"
+  docker push ${cr_url}/${username}/summary-fn
+}
+
+scan_images() {
+  echo "🔒 🐳 scan images"
+
+  echo "   🔒 🐳 twitter-fn"
+  docker scan ${cr_url}/${username}/twitter-fn
+
+  echo "   🔒 🐳 watson-fn"
+  docker scan ${cr_url}/${username}/watson-fn
+
+  echo "   🔒 🐳 gvision-fn"
+  docker scan ${cr_url}/${username}/gvision-fn
+
+  echo "   🔒 🐳 summary-fn"
+  docker scan ${cr_url}/${username}/summary-fn
 }
 
 go_fmt() {
@@ -395,7 +435,10 @@ Examples:
 * Run only tests: .................... build.sh --test
 * Compile with tests: ................ build.sh -f -t
 * Automatic recompilation: ........... build.sh --watch
-* Build Docker images: ............... build.sh --docker-images
+* Build and push Docker images: ...... build.sh --docker -d
+* Build Docker images: ............... build.sh --images -i
+* Push Docker images: ................ build.sh --push -p
+* Scan Docker images: ................ build.sh --scan -s
 * Build cross platform binaries: ..... build.sh --all
 EOT
 }

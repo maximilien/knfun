@@ -1,35 +1,25 @@
 # Use the official Golang image to create a build artifact.
 # This is based on Debian and sets the GOPATH to /go.
 # https://hub.docker.com/_/golang
-FROM golang:1.17 as builder
+FROM golang:1.18-alpine
 
 # Create and change to the app directory.
-WORKDIR /app
+WORKDIR /usr/src/app
 
 # Retrieve application dependencies using go modules.
 # Allows container builds to reuse downloaded dependencies.
-COPY go.* ./
-RUN go mod download
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
 
 # Copy local code to the container image.
-COPY . ./
+COPY . .
 
 # Build the binary.
-# -mod=readonly ensures immutable go.mod and go.sum in container builds.
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -v -o twitter-fn ./funcs/twitter/...
+RUN go build -o /usr/local/twitter-fn ./funcs/twitter/...
 
-# Use the official Alpine image for a lean production container.
-# https://hub.docker.com/_/alpine
-# https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
-FROM alpine:3
-RUN apk add --no-cache ca-certificates
+# Add start.sh
+ADD ./funcs/twitter/start.sh /
+RUN chmod +x /start.sh
 
-# Copy the binary to the production image from the builder stage.
-COPY --from=builder /app/twitter-fn /twitter-fn
-
-# Run the web service on container startup.
-CMD /twitter-fn search NBA -o json -c 10 -p 8080 -S \
-                --twitter-api-key $TWITTER_API_KEY \
-                --twitter-api-secret-key $TWITTER_API_SECRET_KEY \
-                --twitter-access-token $TWITTER_ACCESS_TOKEN \
-                --twitter-access-token-secret $TWITTER_ACCESS_TOKEN_SECRET
+# start it
+CMD ["/start.sh"]

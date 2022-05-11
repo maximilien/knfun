@@ -14,5 +14,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-/usr/local/givison-fn dl http://pbs.twimg.com/media/EHb34-KXYAESI46.jpg -o json -p 8080 -S \
+/usr/local/gvision-fn dl http://pbs.twimg.com/media/EHb34-KXYAESI46.jpg -o json -p 8080 -S \
                       --gvision-api-json $GVISION_API_JSON

@@ -65,6 +65,30 @@ func Flatten(in interface{}, output string, toText ToTextFunc) string {
 	return outputData
 }
 
+func FileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
+}
+
+func CreateTmpFile(content string) (string, error) {
+	file, err := ioutil.TempFile("", "knfun")
+	if err != nil {
+		return "", err
+	}
+
+	out, err := os.Create(file.Name())
+	if err != nil {
+		return "", err
+	}
+	defer out.Close()
+
+	_, err = out.WriteString(content)
+	return file.Name(), err
+}
+
 func DownloadTmpFile(url string) (string, error) {
 	file, err := ioutil.TempFile("", "knfun")
 	if err != nil {

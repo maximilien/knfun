@@ -62,6 +62,19 @@ func (detectLabelsFn *DetectLabelsFn) ClassifyImage() (ClassifyImageData, error)
 		}
 	}
 
+	googleCredentials := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	if !common.FileExists(googleCredentials) {
+		googleCredentialsFilepath, err := common.CreateTmpFile(googleCredentials)
+		if err != nil {
+			return ClassifyImageData{}, fmt.Errorf("error creating GOOGLE_APPLICATION_CREDENTIALS file from enviroment variable: %s", err.Error())
+		}
+
+		err = os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", googleCredentialsFilepath)
+		if err != nil {
+			return ClassifyImageData{}, fmt.Errorf("error setting GOOGLE_APPLICATION_CREDENTIALS enviroment variable: %s", err.Error())
+		}
+	}
+
 	var err error
 	if detectLabelsFn.client == nil {
 		gVisionClient, err := vision.NewImageAnnotatorClient(ctx)
